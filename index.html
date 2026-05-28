@@ -17,6 +17,7 @@ h1 { font-size:18px; margin:0; font-weight:600; }
 .latest .v { font-size:23px; font-weight:700; }
 .latest .label { font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
 .latest .mini { font-size:11px; color:var(--muted); margin-top:3px; }
+.latest .hint { font-size:10.5px; color:#3fb950; margin-top:3px; font-weight:600; }
 .regime { display:inline-block; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:600; margin-left:6px; vertical-align:middle; }
 .regime.FAVORABLE { background:rgba(26,127,55,0.20); color:#3fb950; }
 .regime.NEUTRAL { background:rgba(154,103,0,0.20); color:#d29922; }
@@ -76,16 +77,19 @@ section.evidence { max-width:1200px; margin:0 auto; display:flex; flex-direction
       <div class="label">IV_CONV pct <span id="ld-date">--</span></div>
       <div><span class="v" id="ld-ivc">--</span><span class="regime" id="lr-ivc">--</span></div>
       <div class="mini">raw: <span id="ld-ivcraw">--</span>%</div>
+      <div class="hint">&uarr; mas alto = mejor (FAV &ge;80)</div>
     </div>
     <div class="latest">
       <div class="label">VIX pct</div>
       <div><span class="v" id="ld-vix">--</span><span class="regime" id="lr-vix">--</span></div>
       <div class="mini">VIX: <span id="ld-vixraw">--</span></div>
+      <div class="hint">&uarr; mas alto = mejor (FAV &ge;80)</div>
     </div>
     <div class="latest">
       <div class="label">PUT SKEW pct</div>
       <div><span class="v" id="ld-ps">--</span><span class="regime" id="lr-ps">--</span></div>
       <div class="mini">skew_25d_vs50 @dte160</div>
+      <div class="hint">&uarr; mas alto = mejor (FAV &ge;80)</div>
     </div>
   </div>
 </div>
