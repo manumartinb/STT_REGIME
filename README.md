@@ -1,34 +1,50 @@
-# IV_CONVEXITY NIVEL - STT V9 Dashboard
+# STT REGIME - IV_CONV / VIX / PUT SKEW NIVEL
 
-Dashboard de la concavidad de la PUT smile + VIX, validado contra STT V9
-(PUT BWB +K1 -2K2 +K3, DTE 150-170, 1,629 trades + 1,223 dias unicos, 2019-2025).
+Dashboard de 3 senales de regimen validadas contra STT V9 (PUT BWB +K1 -2K2 +K3,
+DTE 150-170, 1,629 trades + 1,223 dias unicos, 2019-2025).
 
 **Live:** https://manumartinb.github.io/IV_CONVEXITY_NIVEL_STT/
 
-## Que mide
+## Las 3 senales (percentil expanding 0-100, ex-ante)
 
-`IV_CONVEXITY = (iv_k1 + iv_k3)/2 - iv_k2` sobre las 3 patas PUT del BWB
-(formula canonica Werner). Mide cuanto esta el body K2 IV deprimido respecto
-a las alas K1/K3 en la smile de puts. Rankeado por percentil expanding
-(ex-ante, sin lookahead).
+| Senal | Definicion | r vs PnL_d030 |
+|---|---|---|
+| IV_CONV | `(iv_k1+iv_k3)/2 - iv_k2` (concavidad PUT smile, Werner) | +0.32 |
+| VIX | nivel VIX (percentil expanding) | +0.39 |
+| PUT SKEW NIVEL | `skew_25d_vs50_pct_expanding` @ dte160 | +0.25 |
+
+Bandas: FAVORABLE >=80, NEUTRAL 20-80, ADVERSO <=20.
 
 ## Hallazgos clave
 
-- IV_CONV TOP10% (P>=90): edge +2.64 pts mean d001-d030 vs RAW (+1.40)
-- LOYO neto: 6/7 anos positivos (2025 invierte)
-- r(IV_CONV pct, VIX) = +0.64 — fuerte correlacion con regimen VIX
-- Partial r controlando VIX: +0.13 (senal pura Werner real pero modesta)
-- VIX solo es predictor mas fuerte (r=+0.42 vs IV_CONV r=+0.32)
-- Setup de oro: AND TOP20 IVC + TOP20 VIX (interseccion)
-- Comportamiento regimen-dependiente: IV_CONV manda en bear, VIX manda en bull
+- **PUT SKEW NIVEL converge con Batman LT** (puts caros = favorable) y es la senal
+  menos solapada con IVC (rho ~+0.20): el par IVC + PUT SKEW es el mejor para combinar.
+- **VIX** es el predictor mas fuerte en solitario pero se solapa con IVC (rho ~+0.51)
+  y PUT SKEW (rho ~+0.60).
+- **Triple AND** (las 3 >=P80): cohorte mas selectiva (N pequeno, WR alto).
+- **SDEX descartado**: no transfiere a STT (r=-0.11, patron en U).
+- **BB sobre IV_CONV descartado**: inferior a pct_expanding (BB-90 r=+0.19 vs
+  pct_exp +0.32; BB largo ~200 converge pero no supera).
+- VIX expanding mantiene poder (gate r_d030 +0.39 vs rank +0.42).
 
-## Estructura
+## Estructura del estudio
 
-- `index.html` - dashboard principal (lee data.json)
-- `data.json` - datos serializados (latest, series, tablas, stats)
-- `evidence/` - PNGs (trayectorias, heatmap, conjuncion AND/OR)
-- `update_dashboard.py` - script para regenerar data.json + evidencia
+- **Seccion A - SOLAS**: cortes percentil (TOP/BOT) de cada senal vs RAW.
+- **Seccion B - 2 a 2**: joint terciles 3x3 + composite AND/OR (oro) y AND/OR BOT (hierro).
+- **Seccion C - 3 a 3**: triple AND, >=2 de 3, OR, hierro triple.
+- **Seccion D - correlaciones**: matriz 3x3 + r vs PnL.
 
-## Fuente
+Todas las tablas y charts en doble panel **mean + median**.
 
-Dataset madre: `C:\Users\Administrator\Desktop\Backtests DATABASE\STT\STT_CLASSIC_V9_MERGED_T0_mediana.csv`
+## Archivos
+
+- `index.html` - dashboard (lee data.json)
+- `data.json` - datos serializados
+- `evidence/` - PNGs (trayectorias, heatmaps, composites)
+- `update_dashboard.py` - regenera data.json + evidencia desde el CSV madre
+
+## Fuentes
+
+- `Backtests DATABASE/STT/STT_CLASSIC_V9_MERGED_T0_mediana.csv`
+- `FINAL DATA/VIX_CLOSE_HISTORICAL_PRICES.csv`
+- `Skew/SKEW_PUT_ENRICHED.csv` (col `skew_25d_vs50_pct_expanding`, dte_target=160)

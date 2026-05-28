@@ -2,343 +2,251 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>IV_CONVEXITY NIVEL - STT V9 Dashboard</title>
+<title>STT REGIME - IV_CONV / VIX / PUT SKEW NIVEL</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
 <style>
-:root {
-  --bg: #0d1117;
-  --panel: #161b22;
-  --text: #c9d1d9;
-  --muted: #8b949e;
-  --border: #30363d;
-}
+:root { --bg:#0d1117; --panel:#161b22; --text:#c9d1d9; --muted:#8b949e; --border:#30363d; }
 * { box-sizing: border-box; }
-body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg); color: var(--text); padding: 16px; }
-.header { max-width: 1200px; margin: 0 auto 16px auto; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
-h1 { font-size: 18px; margin: 0; font-weight: 600; }
-.subtitle { color: var(--muted); font-size: 13px; margin-top: 2px; }
-.latest-group { display: flex; gap: 10px; flex-wrap: wrap; }
-.latest { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 10px 14px; min-width: 190px; }
-.latest .v { font-size: 26px; font-weight: 700; }
-.latest .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
-.latest .vix-mini { font-size: 12px; color: var(--muted); margin-top: 4px; }
-.regime { display: inline-block; padding: 2px 10px; border-radius: 12px; font-size: 12px; font-weight: 600; margin-left: 8px; vertical-align: middle; }
-.regime.FAVORABLE { background: rgba(26,127,55,0.20); color: #3fb950; }
-.regime.NEUTRAL   { background: rgba(154,103,0,0.20); color: #d29922; }
-.regime.ADVERSO   { background: rgba(207,34,46,0.20); color: #f85149; }
-#chart { max-width: 1200px; margin: 0 auto; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 8px; }
-.note { max-width: 1200px; margin: 12px auto; color: var(--muted); font-size: 13px; line-height: 1.55; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 12px 14px; }
-.note strong { color: var(--text); }
-.note code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: #21262d; padding: 1px 5px; border-radius: 3px; font-size: 12px; color: var(--text); }
-.footer { max-width: 1200px; margin: 14px auto 0 auto; color: var(--muted); font-size: 12px; text-align: center; }
-.footer a { color: #58a6ff; text-decoration: none; }
-.footer a:hover { text-decoration: underline; }
-section#evidence { max-width: 1200px; margin: 28px auto 0 auto; display: flex; flex-direction: column; gap: 20px; }
-.ev-card { background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 20px 24px; }
-.ev-card h2 { font-size: 17px; margin: 0 0 4px 0; color: var(--text); font-weight: 600; }
-.ev-card .ev-tag { display: inline-block; font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; margin-bottom: 10px; }
-.ev-card p { font-size: 13.5px; line-height: 1.65; color: #b6bec9; margin: 8px 0; }
-.ev-card p strong { color: var(--text); }
-.ev-card img { display: block; max-width: 100%; height: auto; margin: 14px auto; border: 1px solid var(--border); border-radius: 4px; }
-.ev-card ul { font-size: 13.5px; line-height: 1.65; color: #b6bec9; margin: 8px 0; padding-left: 22px; }
-.ev-table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin: 12px 0 4px 0; }
-.ev-table th, .ev-table td { padding: 7px 10px; border-bottom: 1px solid var(--border); text-align: right; }
-.ev-table thead th { background: #21262d; color: var(--text); font-weight: 600; border-bottom: 1px solid #444c56; }
-.ev-table tbody tr:hover { background: rgba(88, 166, 255, 0.06); }
-.ev-table th:first-child, .ev-table td:first-child { text-align: left; }
-.ev-table .raw-row td { font-weight: 600; background: rgba(255,255,255,0.025); }
-.ev-table.dual { font-size: 11.5px; }
-.ev-table.dual th, .ev-table.dual td { padding: 5px 7px; }
-.ev-table.dual thead th { text-align: center; }
-.ev-table.dual .med-col { background: rgba(88,166,255,0.05); color: #9db4cc; }
-.ev-table.dual thead tr:first-child th[colspan] { border-bottom: 1px solid #444c56; font-size: 11px; color: #8b949e; text-transform: uppercase; letter-spacing: 0.4px; }
-.pos { color: #3fb950; font-weight: 600; }
-.neg { color: #f85149; font-weight: 600; }
-.rules { max-width: 1200px; margin: 18px auto; background: var(--panel); border: 1px solid var(--border); border-radius: 6px; padding: 16px 20px 14px 20px; }
-.rules h2 { font-size: 15px; margin: 0 0 8px 0; color: var(--text); font-weight: 600; }
-.rules h3 { font-size: 11px; margin: 14px 0 4px 0; color: var(--muted); text-transform: uppercase; letter-spacing: 0.7px; font-weight: 600; }
-.rules p { font-size: 13px; line-height: 1.55; color: #b6bec9; margin: 4px 0; }
-.rules ul { font-size: 13px; line-height: 1.65; color: #b6bec9; margin: 4px 0; padding-left: 22px; }
-.rules code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: #21262d; padding: 1px 5px; border-radius: 3px; font-size: 12px; color: var(--text); }
-.rules .callout { background: #21262d; border-left: 3px solid #58a6ff; padding: 10px 14px; border-radius: 4px; font-size: 13px; color: var(--text); margin: 10px 0; }
-.rules .callout.warn { border-left-color: #d29922; }
-.rules .callout.good { border-left-color: #3fb950; }
-.rules .callout.bad  { border-left-color: #f85149; }
-.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-top: 12px; }
-.kpi { background: #21262d; border: 1px solid var(--border); border-radius: 4px; padding: 10px 12px; }
-.kpi .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; }
-.kpi .vv { font-size: 18px; font-weight: 700; color: var(--text); margin-top: 4px; }
+body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif; background:var(--bg); color:var(--text); padding:16px; }
+.header { max-width:1200px; margin:0 auto 16px auto; display:flex; flex-wrap:wrap; align-items:flex-start; justify-content:space-between; gap:12px; }
+h1 { font-size:18px; margin:0; font-weight:600; }
+.subtitle { color:var(--muted); font-size:13px; margin-top:2px; }
+.latest-group { display:flex; gap:8px; flex-wrap:wrap; }
+.latest { background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:9px 12px; min-width:150px; }
+.latest .v { font-size:23px; font-weight:700; }
+.latest .label { font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+.latest .mini { font-size:11px; color:var(--muted); margin-top:3px; }
+.regime { display:inline-block; padding:2px 9px; border-radius:12px; font-size:11px; font-weight:600; margin-left:6px; vertical-align:middle; }
+.regime.FAVORABLE { background:rgba(26,127,55,0.20); color:#3fb950; }
+.regime.NEUTRAL { background:rgba(154,103,0,0.20); color:#d29922; }
+.regime.ADVERSO { background:rgba(207,34,46,0.20); color:#f85149; }
+#chart { max-width:1200px; margin:0 auto; background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:8px; }
+.note { max-width:1200px; margin:12px auto; color:var(--muted); font-size:13px; line-height:1.55; background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:12px 14px; }
+.note strong { color:var(--text); }
+.note code { font-family:ui-monospace,Menlo,monospace; background:#21262d; padding:1px 5px; border-radius:3px; font-size:12px; color:var(--text); }
+.footer { max-width:1200px; margin:14px auto 0 auto; color:var(--muted); font-size:12px; text-align:center; }
+.section-title { max-width:1200px; margin:30px auto 6px auto; font-size:16px; font-weight:700; color:var(--text); border-bottom:2px solid var(--border); padding-bottom:6px; }
+section.evidence { max-width:1200px; margin:0 auto; display:flex; flex-direction:column; gap:18px; }
+.ev-card { background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:18px 22px; margin-top:14px; }
+.ev-card h2 { font-size:16px; margin:0 0 4px 0; color:var(--text); font-weight:600; }
+.ev-card .ev-tag { display:inline-block; font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.7px; margin-bottom:8px; }
+.ev-card p { font-size:13px; line-height:1.6; color:#b6bec9; margin:6px 0; }
+.ev-card p strong { color:var(--text); }
+.ev-card img { display:block; max-width:100%; height:auto; margin:12px auto; border:1px solid var(--border); border-radius:4px; }
+.ev-table { width:100%; border-collapse:collapse; font-size:12.5px; margin:10px 0 4px 0; }
+.ev-table th, .ev-table td { padding:6px 9px; border-bottom:1px solid var(--border); text-align:right; }
+.ev-table thead th { background:#21262d; color:var(--text); font-weight:600; border-bottom:1px solid #444c56; }
+.ev-table tbody tr:hover { background:rgba(88,166,255,0.06); }
+.ev-table th:first-child, .ev-table td:first-child { text-align:left; }
+.ev-table .raw-row td { font-weight:600; background:rgba(255,255,255,0.025); }
+.ev-table.dual { font-size:11.5px; }
+.ev-table.dual th, .ev-table.dual td { padding:5px 7px; }
+.ev-table.dual thead th { text-align:center; }
+.ev-table.dual .med-col { background:rgba(88,166,255,0.05); color:#9db4cc; }
+.ev-table.dual thead tr:first-child th[colspan] { border-bottom:1px solid #444c56; font-size:11px; color:#8b949e; text-transform:uppercase; letter-spacing:0.4px; }
+.pos { color:#3fb950; font-weight:600; }
+.neg { color:#f85149; font-weight:600; }
+.rules { max-width:1200px; margin:18px auto; background:var(--panel); border:1px solid var(--border); border-radius:6px; padding:16px 20px; }
+.rules h2 { font-size:15px; margin:0 0 8px 0; color:var(--text); font-weight:600; }
+.rules h3 { font-size:11px; margin:14px 0 4px 0; color:var(--muted); text-transform:uppercase; letter-spacing:0.7px; font-weight:600; }
+.rules ul { font-size:13px; line-height:1.65; color:#b6bec9; margin:4px 0; padding-left:22px; }
+.rules code { font-family:ui-monospace,Menlo,monospace; background:#21262d; padding:1px 5px; border-radius:3px; font-size:12px; color:var(--text); }
+.rules .callout { background:#21262d; border-left:3px solid #58a6ff; padding:10px 14px; border-radius:4px; font-size:13px; color:var(--text); margin:10px 0; }
+.rules .callout.warn { border-left-color:#d29922; }
+.rules .callout.good { border-left-color:#3fb950; }
+.kpi-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-top:12px; }
+.kpi { background:#21262d; border:1px solid var(--border); border-radius:4px; padding:9px 11px; }
+.kpi .k { font-size:10.5px; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+.kpi .vv { font-size:17px; font-weight:700; color:var(--text); margin-top:3px; }
+.corr-table { width:100%; max-width:640px; border-collapse:collapse; font-size:13px; margin:10px 0; }
+.corr-table th, .corr-table td { padding:8px 12px; border:1px solid var(--border); text-align:center; }
+.corr-table thead th { background:#21262d; }
+.corr-table td.diag { background:#21262d; color:var(--muted); }
 </style>
 </head>
 <body>
 <div class="header">
   <div>
-    <h1>IV_CONVEXITY NIVEL - STT V9 Dashboard</h1>
-    <div class="subtitle">Concavidad de la PUT smile + VIX (PUT BWB +K1 -2K2 +K3, DTE 150-170)</div>
+    <h1>STT REGIME - IV_CONV / VIX / PUT SKEW NIVEL</h1>
+    <div class="subtitle">3 senales de regimen sobre STT (PUT BWB +K1 -2K2 +K3, DTE 150-170) - percentil expanding ex-ante</div>
   </div>
   <div class="latest-group">
     <div class="latest">
-      <div class="label">IV_CONV pct &middot; <span id="latest-date">--</span></div>
-      <div><span class="v" id="latest-value">--</span><span class="regime" id="latest-regime">--</span></div>
-      <div class="vix-mini">raw: <span id="latest-raw">--</span>%</div>
+      <div class="label">IV_CONV pct <span id="ld-date">--</span></div>
+      <div><span class="v" id="ld-ivc">--</span><span class="regime" id="lr-ivc">--</span></div>
+      <div class="mini">raw: <span id="ld-ivcraw">--</span>%</div>
     </div>
     <div class="latest">
-      <div class="label">VIX pct &middot; regime</div>
-      <div><span class="v" id="latest-vixpct">--</span><span class="regime" id="latest-vixregime">--</span></div>
-      <div class="vix-mini">VIX close: <span id="latest-vix">--</span></div>
+      <div class="label">VIX pct</div>
+      <div><span class="v" id="ld-vix">--</span><span class="regime" id="lr-vix">--</span></div>
+      <div class="mini">VIX: <span id="ld-vixraw">--</span></div>
+    </div>
+    <div class="latest">
+      <div class="label">PUT SKEW pct</div>
+      <div><span class="v" id="ld-ps">--</span><span class="regime" id="lr-ps">--</span></div>
+      <div class="mini">skew_25d_vs50 @dte160</div>
     </div>
   </div>
 </div>
 
-<div id="chart" style="height: 560px;"></div>
+<div id="chart" style="height:540px;"></div>
 
 <div class="note">
-  <strong>IV_CONVEXITY</strong> = <code>(iv_k1 + iv_k3)/2 - iv_k2</code> sobre las 3 patas PUT del BWB.
-  Mide la <strong>concavidad de la smile de puts</strong> (Werner). Alta = body K2 IV deprimido respecto
-  a las alas K1/K3 (smile pinch-down). Se rankea por percentil expanding (sin lookahead) contra todo el
-  historico STT V9 (2019-2025, 1.629 trades, 1.223 dias). <strong>FAVORABLE</strong> &ge; 80 (concavidad
-  alta), <strong>ADVERSO</strong> &le; 20 (smile lineal), <strong>NEUTRAL</strong> 20-80.
+  <strong>3 senales canonicas STT</strong>, todas como <strong>percentil expanding</strong> (0-100, sin lookahead):
+  <strong>IV_CONV</strong> = <code>(iv_k1+iv_k3)/2 - iv_k2</code> (concavidad de la PUT smile, Werner) rankeada sobre dias-trade STT &middot;
+  <strong>VIX</strong> = nivel VIX rankeado sobre su serie diaria completa &middot;
+  <strong>PUT SKEW NIVEL</strong> = <code>skew_25d_vs50_pct_expanding</code> @ dte160 (prima de cola en puts, 25d vs ATM).
+  Bandas: <strong>FAVORABLE</strong> &ge;80, <strong>NEUTRAL</strong> 20-80, <strong>ADVERSO</strong> &le;20.
+  Universo: STT V9 2019-2025, las 3 senales presentes.
 </div>
 
-<div class="rules" id="rules">
-  <h2>Como usar IV_CONVEXITY + VIX en STT (operativa)</h2>
+<div class="rules">
+  <h2>Operativa (3 senales)</h2>
   <div class="kpi-grid" id="kpi-baseline"></div>
-
-  <h3>Reglas de entrada</h3>
+  <h3>Como combinarlas</h3>
   <ul>
-    <li><strong>SETUP DE ORO</strong>: IV_CONV pct_exp &ge; 80 <strong>AND</strong> VIX pct &ge; 80 (interseccion).
-      Si ambos se cumplen, edge maximo (+5.5 pts sobre RAW a d030).</li>
-    <li><strong>OK</strong>: cualquiera de los dos en TOP20 (IVC <strong>OR</strong> VIX) ya bate al universo.
-      Mas trades disponibles pero edge mas modesto.</li>
-    <li><strong>EVITAR</strong>: IV_CONV pct &le; 20 <strong>solo si VIX tambien esta bajo</strong> (regimen
-      complacencia). Trades en zona ADVERSA puro suelen sangrar mean PnL en d020+.</li>
-  </ul>
-
-  <h3>Caveat critico (no es senal universal)</h3>
-  <div class="callout warn">
-    <strong>VIX es predictor mas fuerte que IV_CONV en aislamiento</strong>
-    (r=+0.42 vs r=+0.32 con PnL_d030). Aprox <strong>el 40% del edge aparente de IV_CONV es VIX riding</strong>.
-    Cuando se controla VIX, la senal pura Werner queda en partial_r ~ +0.13 (modesta pero real).
-    <strong>Operativa</strong>: usar AMBOS, no IV_CONV solo.
-  </div>
-  <div class="callout bad">
-    <strong>2025 invierte el patron</strong>. En el subset parcial 2025 (hasta oct-2025), TOP20 IV_CONV
-    rinde -0.5 vs RAW +1.0 (edge -1.5 pts mean d001-d030). Spearman r d030 = -0.39.
-    No es ruido: hay regimen distinto en 2025. Vigilar antes de operar 2026.
-  </div>
-
-  <h3>Regla por regimen direccional (descubierto en analisis)</h3>
-  <ul>
-    <li><strong>SPX bull</strong> (chg_d030 &gt; +3%): VIX manda (r=+0.54), IV_CONV muere (r=+0.03).
-      <strong>Priorizar VIX alto.</strong></li>
-    <li><strong>SPX bear</strong> (chg_d030 &lt; -3%): IV_CONV manda (r=+0.47, supera a VIX r=+0.30).
-      <strong>Priorizar IV_CONV alto.</strong></li>
-    <li><strong>SPX flat</strong> (|chg| &le; 1%): empate, ambos contribuyen. Composite AND optimo.</li>
+    <li><strong>IVC + PUT SKEW es la mejor pareja</strong>: son las menos solapadas (rho ~+0.20). Cada una aporta info nueva. AND de ambas en TOP20 = setup de oro de par.</li>
+    <li><strong>VIX es el predictor mas fuerte en solitario</strong> (r~+0.39) pero se solapa con IVC (rho ~+0.51) y con PUT SKEW (rho ~+0.60): anade menos en combinacion.</li>
+    <li><strong>Triple AND</strong> (las 3 &ge;P80): cohorte mas selectiva, mayor WR, pero N pequeno. Ver seccion 3-a-3.</li>
+    <li><strong>EVITAR</strong> el HIERRO: las 3 (o pares) en BOT20 simultaneo - cohorte de no-entrada.</li>
   </ul>
 </div>
 
-<section id="evidence">
+<div class="section-title">Seccion A &middot; SENALES SOLAS (cortes percentil vs RAW)</div>
+<section class="evidence">
+  <div class="ev-card"><div class="ev-tag">A1 &middot; IV_CONV pct_expanding</div><h2>IV_CONV sola</h2>
+    <table class="ev-table dual" id="tbl-ivc"></table>
+    <img src="evidence/traj_ivc.png" alt="trayectoria IVC" loading="lazy"></div>
+  <div class="ev-card"><div class="ev-tag">A2 &middot; VIX pct_expanding</div><h2>VIX sola</h2>
+    <table class="ev-table dual" id="tbl-vix"></table>
+    <img src="evidence/traj_vix.png" alt="trayectoria VIX" loading="lazy"></div>
+  <div class="ev-card"><div class="ev-tag">A3 &middot; PUT SKEW NIVEL</div><h2>PUT SKEW sola</h2>
+    <table class="ev-table dual" id="tbl-ps"></table>
+    <img src="evidence/traj_ps.png" alt="trayectoria PS" loading="lazy"></div>
+</section>
 
-  <!-- TABLE 1: IV_CONV cuts vs RAW -->
-  <div class="ev-card">
-    <div class="ev-tag">Tabla 1 / 5 &middot; Cortes IV_CONV pct_expanding</div>
-    <h2>Edge de IV_CONV por percentil vs RAW</h2>
-    <p>Cohortes definidas por percentil expanding del IV_CONV al dia de entrada. RAW es el universo entero (sin filtro).
-       <code>mean d001-d030</code> es el promedio de los 30 PnL diarios; <code>edge</code> es la diferencia vs RAW.</p>
-    <table class="ev-table dual" id="tbl-ivc">
-      <thead>
-        <tr><th rowspan="2">Corte</th><th rowspan="2">N</th><th rowspan="2">dias</th><th colspan="2">d020</th><th colspan="2">d030</th><th colspan="2">avg d1-d30</th><th colspan="2">edge avg</th><th rowspan="2">WR d030</th><th rowspan="2">PF d030</th></tr>
-        <tr><th>mean</th><th>med</th><th>mean</th><th>med</th><th>mean</th><th>med</th><th>mean</th><th>med</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <p style="font-size:11.5px;color:#8b949e;margin-top:4px">Doble panel: <strong>mean</strong> (sensible a cola/outliers) y <strong>median</strong> (tendencia central robusta). Los charts de abajo replican ambos.</p>
-    <img src="evidence/stt_pnl_trajectory_ivc.png" alt="PnL trajectory by IVC cut [mean | median]" loading="lazy">
+<div class="section-title">Seccion B &middot; 2 A 2 (joint terciles + composite ORO/HIERRO)</div>
+<section class="evidence">
+  <div class="ev-card"><div class="ev-tag">B1 &middot; IVC x VIX</div><h2>IVC x VIX</h2>
+    <img src="evidence/heat_iv.png" alt="heatmap IVC x VIX" loading="lazy">
+    <table class="ev-table dual" id="tbl-combo-iv"></table>
+    <img src="evidence/comp_iv.png" alt="composite IVC x VIX" loading="lazy"></div>
+  <div class="ev-card"><div class="ev-tag">B2 &middot; IVC x PUT SKEW (par mas ortogonal)</div><h2>IVC x PUT SKEW</h2>
+    <img src="evidence/heat_ip.png" alt="heatmap IVC x PS" loading="lazy">
+    <table class="ev-table dual" id="tbl-combo-ip"></table>
+    <img src="evidence/comp_ip.png" alt="composite IVC x PS" loading="lazy"></div>
+  <div class="ev-card"><div class="ev-tag">B3 &middot; VIX x PUT SKEW</div><h2>VIX x PUT SKEW</h2>
+    <img src="evidence/heat_vp.png" alt="heatmap VIX x PS" loading="lazy">
+    <table class="ev-table dual" id="tbl-combo-vp"></table>
+    <img src="evidence/comp_vp.png" alt="composite VIX x PS" loading="lazy"></div>
+</section>
+
+<div class="section-title">Seccion C &middot; 3 A 3 (las tres combinadas)</div>
+<section class="evidence">
+  <div class="ev-card"><div class="ev-tag">C &middot; IVC x VIX x PUT SKEW</div><h2>Triple composite</h2>
+    <p>RAW + cada senal sola TOP20 + AND de las 3 (oro triple) + al menos 2 de 3 + OR cualquiera + AND BOT20 de las 3 (hierro triple).</p>
+    <table class="ev-table dual" id="tbl-triple"></table>
+    <img src="evidence/comp_triple.png" alt="triple composite" loading="lazy"></div>
+</section>
+
+<div class="section-title">Seccion D &middot; Correlaciones / ortogonalidad</div>
+<section class="evidence">
+  <div class="ev-card"><div class="ev-tag">D &middot; Spearman</div><h2>Matriz de correlacion entre senales + poder predictivo</h2>
+    <table class="corr-table" id="corr-matrix"></table>
+    <div id="corr-pnl" style="font-size:13px;color:#b6bec9;line-height:1.7;margin-top:10px"></div>
+    <p style="margin-top:10px"><strong>Lectura</strong>: el par <strong>IVC x PUT SKEW</strong> es el de menor solapamiento - combinar ambas aporta diversificacion real. VIX, aunque mas predictivo solo, comparte mas varianza con las otras dos.</p>
   </div>
-
-  <!-- TABLE 2: VIX cuts vs RAW -->
-  <div class="ev-card">
-    <div class="ev-tag">Tabla 2 / 5 &middot; Cortes VIX percentil</div>
-    <h2>Edge de VIX por percentil vs RAW</h2>
-    <p>Mismo formato, ahora con VIX al dia de entrada (percentil rank simple sobre el universo).
-       Notese que VIX en aislamiento tiene mas edge que IV_CONV: la mayor parte del aparente edge
-       de IV_CONV en bulk era VIX riding.</p>
-    <table class="ev-table dual" id="tbl-vix">
-      <thead>
-        <tr><th rowspan="2">Corte</th><th rowspan="2">N</th><th rowspan="2">dias</th><th colspan="2">d020</th><th colspan="2">d030</th><th colspan="2">avg d1-d30</th><th colspan="2">edge avg</th><th rowspan="2">WR d030</th><th rowspan="2">PF d030</th></tr>
-        <tr><th>mean</th><th>med</th><th>mean</th><th>med</th><th>mean</th><th>med</th><th>mean</th><th>med</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <img src="evidence/stt_pnl_trajectory_vix.png" alt="PnL trajectory by VIX cut [mean | median]" loading="lazy">
-  </div>
-
-  <!-- TABLE 3: IVC x VIX joint 3x3 -->
-  <div class="ev-card">
-    <div class="ev-tag">Tabla 3 / 5 &middot; Conjuncion IV_CONV x VIX</div>
-    <h2>Cohortes 3x3 IVC x VIX</h2>
-    <p>Particionamos IV_CONV pct y VIX pct en bajo/medio/alto (terciles) y cruzamos.
-       Solo se muestran celdas con N&ge;20 trades. Vease el heatmap para localizar la celda de oro.</p>
-    <table class="ev-table dual" id="tbl-joint">
-      <thead>
-        <tr><th rowspan="2">Cohorte</th><th rowspan="2">N</th><th rowspan="2">dias</th><th colspan="2">d020</th><th colspan="2">d030</th><th colspan="2">avg d1-d30</th><th colspan="2">edge avg</th><th rowspan="2">WR d030</th><th rowspan="2">PF d030</th></tr>
-        <tr><th>mean</th><th>med</th><th>mean</th><th>med</th><th>mean</th><th>med</th><th>mean</th><th>med</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <p style="font-size:11.5px;color:#8b949e;margin-top:4px">La celda <strong>IVC alto &amp; VIX bajo</strong> (mean d030 -10.0) es el unico cuadro rojo del panel MEAN. En el panel MEDIAN se vuelve +2.5: la -10 es artefacto de 8 trades pre-COVID (feb-2020). Vease heatmap dual.</p>
-    <img src="evidence/stt_joint_heatmap.png" alt="Joint heatmap IVC x VIX [mean | median]" loading="lazy">
-  </div>
-
-  <!-- TABLE 4: AND/OR composite -->
-  <div class="ev-card">
-    <div class="ev-tag">Tabla 4 / 5 &middot; Composite AND/OR (TOP20)</div>
-    <h2>Setup de oro: interseccion TOP20 IVC y TOP20 VIX</h2>
-    <p>Comparativa directa: cada senal sola, su interseccion (AND) y su union (OR).
-       <strong>Setup de oro = AND</strong>: cuando ambos estan en su TOP20%, edge maximo.
-       OR es menos selectivo pero mas grande.</p>
-    <table class="ev-table dual" id="tbl-combo">
-      <thead>
-        <tr><th rowspan="2">Cohorte</th><th rowspan="2">N</th><th rowspan="2">dias</th><th colspan="2">d020</th><th colspan="2">d030</th><th colspan="2">avg d1-d30</th><th colspan="2">edge avg</th><th rowspan="2">WR d030</th><th rowspan="2">PF d030</th></tr>
-        <tr><th>mean</th><th>med</th><th>mean</th><th>med</th><th>mean</th><th>med</th><th>mean</th><th>med</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <img src="evidence/stt_and_or_composite.png" alt="AND/OR composite trajectory [mean | median]" loading="lazy">
-  </div>
-
-  <!-- TABLE 5: SETUP DE HIERRO (BOT20) -->
-  <div class="ev-card">
-    <div class="ev-tag">Tabla 5 / 5 &middot; Composite BOT20 (lo peor)</div>
-    <h2>Setup de Hierro: interseccion BOT20 IVC y BOT20 VIX</h2>
-    <p>El reverso del Setup de Oro: cada senal en su <strong>BOT20%</strong> (concavidad baja / VIX bajo),
-       su interseccion (AND) y su union (OR). <strong>Setup de Hierro = AND</strong>: ambos en su peor
-       quintil simultaneamente. Es la cohorte a EVITAR.</p>
-    <table class="ev-table dual" id="tbl-iron">
-      <thead>
-        <tr><th rowspan="2">Cohorte</th><th rowspan="2">N</th><th rowspan="2">dias</th><th colspan="2">d020</th><th colspan="2">d030</th><th colspan="2">avg d1-d30</th><th colspan="2">edge avg</th><th rowspan="2">WR d030</th><th rowspan="2">PF d030</th></tr>
-        <tr><th>mean</th><th>med</th><th>mean</th><th>med</th><th>mean</th><th>med</th><th>mean</th><th>med</th></tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <div class="ev-callout bad" style="margin-top:10px">
-      <strong>AND BOT20 (Hierro)</strong>: mean d030 negativo y PF&lt;1 (pierde dinero en media). En MEDIAN
-      sigue positivo (el trade tipico no pierde), pero el WR cae a ~58% y la cola izquierda domina.
-      Cohorte de NO-ENTRADA: concavidad baja + VIX bajo = complacencia sin prima de cola.
-    </div>
-    <img src="evidence/stt_iron_composite.png" alt="Iron composite BOT20 trajectory [mean | median]" loading="lazy">
-  </div>
-
 </section>
 
 <div class="footer">
-  Universo: <span id="meta-universe">--</span> &middot; metrica: PnL_d020 / PnL_d030 (puntos absolutos sobre net_credit) &middot;
-  formula: IV_CONVEXITY = (iv_k1+iv_k3)/2 - iv_k2 (Werner)
+  Universo: <span id="meta-universe">--</span> &middot; metrica PnL_d020/d030 (pts sobre net_credit) &middot;
+  VIX en percentil <span id="meta-vixmethod">expanding</span> &middot; regenera: update_dashboard.py
 </div>
 
 <script>
 fetch('data.json?v=' + Date.now()).then(r => r.json()).then(data => {
-  // Latest
-  document.getElementById('latest-date').textContent = data.latest.date;
-  document.getElementById('latest-value').textContent = data.latest.ivc_pct.toFixed(1);
-  const rEl = document.getElementById('latest-regime');
-  rEl.textContent = data.latest.regime_ivc;
-  rEl.className = 'regime ' + data.latest.regime_ivc;
-  document.getElementById('latest-vix').textContent = data.latest.vix.toFixed(2);
-  document.getElementById('latest-raw').textContent = (data.latest.ivc_raw * 100).toFixed(3);
-  if (data.latest.vix_pct !== undefined) {
-    document.getElementById('latest-vixpct').textContent = data.latest.vix_pct.toFixed(1);
-    const vEl = document.getElementById('latest-vixregime');
-    vEl.textContent = data.latest.regime_vix;
-    vEl.className = 'regime ' + data.latest.regime_vix;
-  }
+  const L = data.latest;
+  document.getElementById('ld-date').textContent = L.date;
+  const setReg = (id, v) => { const e=document.getElementById(id); e.textContent=v; e.className='regime '+v; };
+  document.getElementById('ld-ivc').textContent = L.ivc_pct.toFixed(1); setReg('lr-ivc', L.regime_ivc);
+  document.getElementById('ld-ivcraw').textContent = (L.ivc_raw*100).toFixed(3);
+  document.getElementById('ld-vix').textContent = L.vix_pct.toFixed(1); setReg('lr-vix', L.regime_vix);
+  document.getElementById('ld-vixraw').textContent = L.vix_raw.toFixed(2);
+  document.getElementById('ld-ps').textContent = L.ps_pct.toFixed(1); setReg('lr-ps', L.regime_ps);
 
-  // Meta
   document.getElementById('meta-universe').textContent =
-    `STT V9 ${data.meta.date_min} - ${data.meta.date_max} | N=${data.meta.n_trades.toLocaleString()} trades + ${data.meta.n_days.toLocaleString()} dias`;
+    `STT V9 ${data.meta.date_min} - ${data.meta.date_max} | N=${data.meta.n_trades.toLocaleString()} + ${data.meta.n_days.toLocaleString()} dias`;
+  document.getElementById('meta-vixmethod').textContent = data.stats.vix_method;
 
-  // KPI baseline
   const b = data.baseline;
   document.getElementById('kpi-baseline').innerHTML = `
     <div class="kpi"><div class="k">N trades</div><div class="vv">${b.n_trades.toLocaleString()}</div></div>
     <div class="kpi"><div class="k">N dias</div><div class="vv">${b.n_days.toLocaleString()}</div></div>
-    <div class="kpi"><div class="k">RAW d030 mean</div><div class="vv">${b.mean_d030 >= 0 ? '+' : ''}${b.mean_d030.toFixed(2)}</div></div>
-    <div class="kpi"><div class="k">RAW d030 median</div><div class="vv">${b.med_d030 >= 0 ? '+' : ''}${b.med_d030.toFixed(2)}</div></div>
-    <div class="kpi"><div class="k">RAW avg d1-d30 mean</div><div class="vv">${b.mean_d001_d030 >= 0 ? '+' : ''}${b.mean_d001_d030.toFixed(2)}</div></div>
-    <div class="kpi"><div class="k">RAW avg d1-d30 median</div><div class="vv">${b.med_d001_d030 >= 0 ? '+' : ''}${b.med_d001_d030.toFixed(2)}</div></div>
+    <div class="kpi"><div class="k">RAW d030 mean</div><div class="vv">${b.mean_d030>=0?'+':''}${b.mean_d030.toFixed(2)}</div></div>
+    <div class="kpi"><div class="k">RAW d030 median</div><div class="vv">${b.med_d030>=0?'+':''}${b.med_d030.toFixed(2)}</div></div>
+    <div class="kpi"><div class="k">RAW avg d1-d30 mean</div><div class="vv">${b.mean_d001_d030>=0?'+':''}${b.mean_d001_d030.toFixed(2)}</div></div>
     <div class="kpi"><div class="k">RAW WR d030</div><div class="vv">${b.wr_d030.toFixed(1)}%</div></div>
-    <div class="kpi"><div class="k">r(IVC, PnL d030)</div><div class="vv">${data.stats.r_spearman_ivc_pnl_d030.toFixed(3)}</div></div>
-    <div class="kpi"><div class="k">r(VIX, PnL d030)</div><div class="vv">${data.stats.r_spearman_vix_pnl_d030.toFixed(3)}</div></div>
-    <div class="kpi"><div class="k">r(IVC pct, VIX)</div><div class="vv">${data.stats.r_spearman_pct_vix.toFixed(3)}</div></div>
-  `;
+    <div class="kpi"><div class="k">r(IVC,PnL)</div><div class="vv">${data.stats.r_ivc_pnl.toFixed(3)}</div></div>
+    <div class="kpi"><div class="k">r(VIX,PnL)</div><div class="vv">${data.stats.r_vix_pnl.toFixed(3)}</div></div>
+    <div class="kpi"><div class="k">r(PS,PnL)</div><div class="vv">${data.stats.r_ps_pnl.toFixed(3)}</div></div>`;
 
-  // Tables (dual mean | median)
-  function fillTbl(tblId, rows) {
-    const tbody = document.querySelector('#' + tblId + ' tbody');
+  const HEAD = `<thead>
+    <tr><th rowspan="2">Cohorte</th><th rowspan="2">N</th><th rowspan="2">dias</th><th colspan="2">d020</th><th colspan="2">d030</th><th colspan="2">avg d1-d30</th><th colspan="2">edge avg</th><th rowspan="2">WR d030</th><th rowspan="2">PF d030</th></tr>
+    <tr><th>mean</th><th>med</th><th>mean</th><th>med</th><th>mean</th><th>med</th><th>mean</th><th>med</th></tr></thead>`;
+  function fillTbl(id, rows, baseline) {
     const valid = rows.filter(r => r);
-    // RAW = primera fila => baseline para edge
-    const raw = valid[0];
-    const rawMean = raw.avg_mean, rawMed = raw.avg_med;
-    const sg = (x) => (x >= 0 ? '+' : '') + x.toFixed(2);
-    const cls = (x) => x > 0 ? 'pos' : (x < 0 ? 'neg' : '');
-    tbody.innerHTML = valid.map(r => {
+    const base = baseline || {mean: valid[0].avg_mean, med: valid[0].avg_med};
+    const sg = x => (x>=0?'+':'') + x.toFixed(2);
+    const cls = x => x>0?'pos':(x<0?'neg':'');
+    const body = valid.map(r => {
       const isRaw = r.label.startsWith('RAW');
-      const edgeMean = r.avg_mean - rawMean;
-      const edgeMed  = r.avg_med  - rawMed;
-      return `<tr class="${isRaw ? 'raw-row' : ''}">
-        <td>${r.label}</td>
-        <td>${r.n}</td><td>${r.days}</td>
+      const eM = r.avg_mean - base.mean, eMed = r.avg_med - base.med;
+      return `<tr class="${isRaw?'raw-row':''}"><td>${r.label}</td><td>${r.n}</td><td>${r.days}</td>
         <td>${sg(r.d20_mean)}</td><td class="med-col">${sg(r.d20_med)}</td>
         <td>${sg(r.d30_mean)}</td><td class="med-col">${sg(r.d30_med)}</td>
         <td>${sg(r.avg_mean)}</td><td class="med-col">${sg(r.avg_med)}</td>
-        <td><span class="${isRaw?'':cls(edgeMean)}">${isRaw ? '-' : sg(edgeMean)}</span></td>
-        <td class="med-col"><span class="${isRaw?'':cls(edgeMed)}">${isRaw ? '-' : sg(edgeMed)}</span></td>
-        <td>${r.wr30.toFixed(1)}%</td>
-        <td>${r.pf30}</td>
-      </tr>`;
+        <td><span class="${isRaw?'':cls(eM)}">${isRaw?'-':sg(eM)}</span></td>
+        <td class="med-col"><span class="${isRaw?'':cls(eMed)}">${isRaw?'-':sg(eMed)}</span></td>
+        <td>${r.wr30.toFixed(1)}%</td><td>${r.pf30}</td></tr>`;
     }).join('');
+    document.getElementById(id).innerHTML = HEAD + '<tbody>' + body + '</tbody>';
   }
-  fillTbl('tbl-ivc', data.tbl_ivc);
-  fillTbl('tbl-vix', data.tbl_vix);
-  fillTbl('tbl-joint', data.tbl_joint);
-  fillTbl('tbl-combo', data.tbl_combo);
-  if (data.tbl_iron) fillTbl('tbl-iron', data.tbl_iron);
+  const baseG = {mean: b.mean_d001_d030, med: b.med_d001_d030};
+  fillTbl('tbl-ivc', data.tbl_ivc); fillTbl('tbl-vix', data.tbl_vix); fillTbl('tbl-ps', data.tbl_ps);
+  fillTbl('tbl-combo-iv', data.tbl_combo_iv); fillTbl('tbl-combo-ip', data.tbl_combo_ip); fillTbl('tbl-combo-vp', data.tbl_combo_vp);
+  fillTbl('tbl-triple', data.tbl_triple);
 
-  // Time series chart
-  const dates = data.series.map(d => d.t);
-  const pct   = data.series.map(d => d.p);
-  const vix   = data.series.map(d => d.v);
+  // Correlation matrix
+  const s = data.stats;
+  const cm = (x) => x.toFixed(2);
+  document.getElementById('corr-matrix').innerHTML = `
+    <thead><tr><th></th><th>IVC</th><th>VIX</th><th>PUT SKEW</th></tr></thead>
+    <tbody>
+      <tr><th>IVC</th><td class="diag">1.00</td><td>${cm(s.corr_ivc_vix)}</td><td>${cm(s.corr_ivc_ps)}</td></tr>
+      <tr><th>VIX</th><td>${cm(s.corr_ivc_vix)}</td><td class="diag">1.00</td><td>${cm(s.corr_vix_ps)}</td></tr>
+      <tr><th>PUT SKEW</th><td>${cm(s.corr_ivc_ps)}</td><td>${cm(s.corr_vix_ps)}</td><td class="diag">1.00</td></tr>
+    </tbody>`;
+  document.getElementById('corr-pnl').innerHTML =
+    `Spearman r vs PnL_d030: <strong>IVC ${s.r_ivc_pnl.toFixed(3)}</strong> &middot; <strong>VIX ${s.r_vix_pnl.toFixed(3)}</strong> &middot; <strong>PUT SKEW ${s.r_ps_pnl.toFixed(3)}</strong>. ` +
+    `Par menos correlacionado: IVC x PUT SKEW (rho ${s.corr_ivc_ps.toFixed(2)}).`;
 
-  const trace1 = {
-    x: dates, y: pct, name: 'IV_CONV pct_exp',
-    type: 'scatter', mode: 'lines', line: { color: '#58a6ff', width: 1.2 },
-    hovertemplate: '%{x}<br>IV_CONV pct: <b>%{y:.1f}</b><extra></extra>',
-  };
-  const trace2 = {
-    x: dates, y: vix, name: 'VIX',
-    type: 'scatter', mode: 'lines', yaxis: 'y2',
-    line: { color: '#ff9f43', width: 1.0 },
-    hovertemplate: '%{x}<br>VIX: <b>%{y:.2f}</b><extra></extra>',
-  };
-  const layout = {
-    paper_bgcolor: '#161b22', plot_bgcolor: '#161b22',
-    font: { color: '#c9d1d9', size: 11 },
-    margin: { l: 50, r: 60, t: 30, b: 40 },
-    xaxis: { showgrid: true, gridcolor: '#21262d', zeroline: false },
-    yaxis: { title: 'IV_CONV pct_expanding', range: [0, 100], showgrid: true, gridcolor: '#21262d', tickfont: { color: '#58a6ff' } },
-    yaxis2: { title: 'VIX', overlaying: 'y', side: 'right', tickfont: { color: '#ff9f43' }, showgrid: false },
-    legend: { x: 0.01, y: 0.99, bgcolor: 'rgba(22,27,34,0.7)' },
-    shapes: [
-      { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 80, y1: 80, line: { color: '#3fb950', width: 1, dash: 'dot' } },
-      { type: 'line', xref: 'paper', x0: 0, x1: 1, y0: 20, y1: 20, line: { color: '#f85149', width: 1, dash: 'dot' } },
-    ],
-  };
-  Plotly.newPlot('chart', [trace1, trace2], layout, { responsive: true, displayModeBar: false });
-}).catch(err => {
-  document.getElementById('chart').innerHTML = '<div style="color:#f85149;text-align:center;padding:40px;font-family:monospace">Error loading data.json: ' + err.message + '</div>';
-});
+  // Time series: 3 pct lines + VIX raw secondary
+  const t = data.series.map(d=>d.t);
+  const mk = (y,name,color,axis) => ({x:t, y:data.series.map(d=>d[y]), name, type:'scatter', mode:'lines', line:{color,width:1.1}, yaxis:axis||'y', hovertemplate:'%{x}<br>'+name+': <b>%{y:.1f}</b><extra></extra>'});
+  const traces = [ mk('ivc','IV_CONV pct','#58a6ff'), mk('vix','VIX pct','#ff9f43'), mk('ps','PUT SKEW pct','#bc8cff'),
+                   {x:t, y:data.series.map(d=>d.vraw), name:'VIX raw', type:'scatter', mode:'lines', line:{color:'#6e7681',width:0.7,dash:'dot'}, yaxis:'y2', hovertemplate:'%{x}<br>VIX raw: <b>%{y:.1f}</b><extra></extra>'} ];
+  Plotly.newPlot('chart', traces, {
+    paper_bgcolor:'#161b22', plot_bgcolor:'#161b22', font:{color:'#c9d1d9',size:11},
+    margin:{l:48,r:54,t:30,b:38},
+    xaxis:{showgrid:true,gridcolor:'#21262d',zeroline:false},
+    yaxis:{title:'percentil (0-100)',range:[0,100],showgrid:true,gridcolor:'#21262d'},
+    yaxis2:{title:'VIX raw',overlaying:'y',side:'right',showgrid:false,tickfont:{color:'#6e7681'}},
+    legend:{x:0.01,y:1.08,orientation:'h',bgcolor:'rgba(22,27,34,0.7)'},
+    shapes:[{type:'line',xref:'paper',x0:0,x1:1,y0:80,y1:80,line:{color:'#3fb950',width:1,dash:'dot'}},
+            {type:'line',xref:'paper',x0:0,x1:1,y0:20,y1:20,line:{color:'#f85149',width:1,dash:'dot'}}]
+  }, {responsive:true, displayModeBar:false});
+}).catch(err => { document.getElementById('chart').innerHTML = '<div style="color:#f85149;text-align:center;padding:40px;font-family:monospace">Error: '+err.message+'</div>'; });
 </script>
-
 </body>
 </html>
