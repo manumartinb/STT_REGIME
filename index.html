@@ -94,7 +94,7 @@ section.evidence { max-width:1200px; margin:0 auto; display:flex; flex-direction
   </div>
 </div>
 
-<div id="chart" style="height:540px;"></div>
+<div id="chart" style="height:580px;"></div>
 
 <div class="note">
   <strong>3 senales canonicas STT</strong>, todas como <strong>percentil expanding</strong> (0-100, sin lookahead):
@@ -242,11 +242,20 @@ fetch('data.json?v=' + Date.now()).then(r => r.json()).then(data => {
                    {x:t, y:data.series.map(d=>d.vraw), name:'IV ATM raw', type:'scatter', mode:'lines', line:{color:'#6e7681',width:0.7,dash:'dot'}, yaxis:'y2', hovertemplate:'%{x}<br>IV ATM raw: <b>%{y:.3f}</b><extra></extra>'} ];
   Plotly.newPlot('chart', traces, {
     paper_bgcolor:'#161b22', plot_bgcolor:'#161b22', font:{color:'#c9d1d9',size:11},
-    margin:{l:48,r:54,t:30,b:38},
-    xaxis:{showgrid:true,gridcolor:'#21262d',zeroline:false},
+    margin:{l:48,r:54,t:46,b:64},
+    xaxis:{showgrid:true,gridcolor:'#21262d',zeroline:false,type:'date',
+      rangeselector:{buttons:[
+        {count:20,label:'20D',step:'day',stepmode:'backward'},
+        {count:90,label:'90D',step:'day',stepmode:'backward'},
+        {count:1,label:'1A',step:'year',stepmode:'backward'},
+        {count:3,label:'3A',step:'year',stepmode:'backward'},
+        {step:'all',label:'Todo'}],
+        bgcolor:'#21262d',activecolor:'#1f6feb',font:{color:'#c9d1d9',size:11},
+        bordercolor:'#30363d',borderwidth:1,x:0,y:1.16},
+      rangeslider:{visible:false}},
     yaxis:{title:'percentil (0-100)',range:[0,100],showgrid:true,gridcolor:'#21262d'},
     yaxis2:{title:'IV ATM raw',overlaying:'y',side:'right',showgrid:false,tickfont:{color:'#6e7681'}},
-    legend:{x:0.01,y:1.08,orientation:'h',bgcolor:'rgba(22,27,34,0.7)'},
+    legend:{x:0,y:-0.16,orientation:'h',bgcolor:'rgba(22,27,34,0.7)'},
     shapes:[{type:'line',xref:'paper',x0:0,x1:1,y0:80,y1:80,line:{color:'#3fb950',width:1,dash:'dot'}},
             {type:'line',xref:'paper',x0:0,x1:1,y0:20,y1:20,line:{color:'#f85149',width:1,dash:'dot'}}]
   }, {responsive:true, displayModeBar:false});
