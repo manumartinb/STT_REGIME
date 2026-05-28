@@ -102,12 +102,18 @@ top20_both = sub[(sub['ivc_pct']>=80)&(sub['vix_pct']>=80)]; top20_either = sub[
 tbl_combo = [cohort(sub,'RAW universo'), cohort(top20_ivc,'TOP20 IVC solo'), cohort(top20_vix,'TOP20 VIX solo'),
              cohort(top20_both,'TOP20 IVC AND TOP20 VIX (interseccion)'), cohort(top20_either,'TOP20 IVC OR TOP20 VIX (union)')]
 
+# SETUP DE HIERRO: cohortes BOT20 (lo peor)
+bot20_ivc = sub[sub['ivc_pct']<=20]; bot20_vix = sub[sub['vix_pct']<=20]
+bot20_both = sub[(sub['ivc_pct']<=20)&(sub['vix_pct']<=20)]; bot20_either = sub[(sub['ivc_pct']<=20)|(sub['vix_pct']<=20)]
+tbl_iron = [cohort(sub,'RAW universo'), cohort(bot20_ivc,'BOT20 IVC solo'), cohort(bot20_vix,'BOT20 VIX solo'),
+            cohort(bot20_both,'BOT20 IVC AND BOT20 VIX (interseccion)'), cohort(bot20_either,'BOT20 IVC OR BOT20 VIX (union)')]
+
 data['baseline'] = {'n_trades': len(sub), 'n_days': int(sub['dia'].dt.date.nunique()),
     'mean_d001_d030': round(RAW_AVG_MEAN,3), 'med_d001_d030': round(RAW_AVG_MED,3),
     'mean_d020': round(sub['PnL_d020'].mean(),2), 'med_d020': round(sub['PnL_d020'].median(),2),
     'mean_d030': round(sub['PnL_d030'].mean(),2), 'med_d030': round(sub['PnL_d030'].median(),2),
     'wr_d030': round((sub['PnL_d030']>0).mean()*100,1)}
-data['tbl_ivc']=tbl_ivc; data['tbl_vix']=tbl_vix; data['tbl_joint']=tbl_joint; data['tbl_combo']=tbl_combo
+data['tbl_ivc']=tbl_ivc; data['tbl_vix']=tbl_vix; data['tbl_joint']=tbl_joint; data['tbl_combo']=tbl_combo; data['tbl_iron']=tbl_iron
 data['stats'] = {
     'r_pearson_ivc_vix': round(float(sub['IV_CONVEXITY'].corr(sub['VIX_Close'])),4),
     'r_spearman_pct_vix': round(float(sub['ivc_pct'].rank().corr(sub['VIX_Close'].rank())),4),
@@ -154,7 +160,25 @@ for ax, agg, title in [(axes[0],'mean','MEAN'),(axes[1],'median','MEDIAN')]:
     ax.set_title(f'STT - PnL trayectoria por IV_CONV cut [{title}]')
     ax.legend(loc='upper left', fontsize=7.5); ax.grid(alpha=0.2)
 fig.tight_layout(); fig.savefig(os.path.join(EVDIR,'stt_pnl_trajectory_ivc.png'),facecolor=COL_BG); plt.close(fig)
-print('[SAVED] trajectory dual')
+print('[SAVED] trajectory dual (IVC)')
+
+# 2b. Trajectory DUAL por cortes VIX
+fig, axes = plt.subplots(1, 2, figsize=(16, 6.5), dpi=120, facecolor=COL_BG)
+vix_cut_defs = [(90,'TOP10 (VIX>=P90)','#3fb950'),(80,'TOP20 (VIX>=P80)','#58e078'),(70,'TOP30 (VIX>=P70)','#a3e635'),
+                (30,'BOT30 (VIX<=P30)','#fcad6a'),(20,'BOT20 (VIX<=P20)','#f85149'),(10,'BOT10 (VIX<=P10)','#c0282f')]
+for ax, agg, title in [(axes[0],'mean','MEAN'),(axes[1],'median','MEDIAN')]:
+    ax.set_facecolor(COL_PAN)
+    aggf = (lambda s: s.mean()) if agg=='mean' else (lambda s: s.median())
+    ax.plot(xs, [aggf(sub[f'PnL_d{i:03d}']) for i in xs], color='white', linewidth=2.0, label=f'RAW N={len(sub)}')
+    for thr, lbl, col in vix_cut_defs:
+        s = sub[sub['vix_pct']>=thr] if 'TOP' in lbl else sub[sub['vix_pct']<=thr]
+        ax.plot(xs, [aggf(s[f'PnL_d{i:03d}']) for i in xs], color=col, linewidth=1.3, label=f'{lbl} N={len(s)}')
+    ax.axhline(0, color='gray', linewidth=0.5, alpha=0.5)
+    ax.set_xlabel('dia tras entrada (d001..d030)'); ax.set_ylabel(f'{title} PnL acumulado (pts)')
+    ax.set_title(f'STT - PnL trayectoria por VIX cut [{title}]')
+    ax.legend(loc='upper left', fontsize=7.5); ax.grid(alpha=0.2)
+fig.tight_layout(); fig.savefig(os.path.join(EVDIR,'stt_pnl_trajectory_vix.png'),facecolor=COL_BG); plt.close(fig)
+print('[SAVED] trajectory dual (VIX)')
 
 # 3. Joint heatmap DUAL mean | median
 fig, axes = plt.subplots(1, 2, figsize=(17, 6.8), dpi=120, facecolor=COL_BG)
@@ -198,7 +222,24 @@ for ax, agg, title in [(axes[0],'mean','MEAN'),(axes[1],'median','MEDIAN')]:
     ax.set_title(f'STT - Conjuncion IVC x VIX [{title}]')
     ax.legend(loc='upper left', fontsize=8.5); ax.grid(alpha=0.2)
 fig.tight_layout(); fig.savefig(os.path.join(EVDIR,'stt_and_or_composite.png'),facecolor=COL_BG); plt.close(fig)
-print('[SAVED] and/or dual')
+print('[SAVED] and/or dual (oro)')
+
+# 5. SETUP DE HIERRO (BOT20) DUAL
+fig, axes = plt.subplots(1, 2, figsize=(16, 6), dpi=120, facecolor=COL_BG)
+for ax, agg, title in [(axes[0],'mean','MEAN'),(axes[1],'median','MEDIAN')]:
+    ax.set_facecolor(COL_PAN)
+    aggf = (lambda s: s.mean()) if agg=='mean' else (lambda s: s.median())
+    ax.plot(xs, [aggf(sub[f'PnL_d{i:03d}']) for i in xs], color='white', linewidth=2.0, label=f'RAW N={len(sub)}')
+    ax.plot(xs, [aggf(bot20_ivc[f'PnL_d{i:03d}']) for i in xs], color='#58a6ff', linewidth=1.5, label=f'BOT20 IVC N={len(bot20_ivc)}')
+    ax.plot(xs, [aggf(bot20_vix[f'PnL_d{i:03d}']) for i in xs], color='#ff9f43', linewidth=1.5, label=f'BOT20 VIX N={len(bot20_vix)}')
+    ax.plot(xs, [aggf(bot20_both[f'PnL_d{i:03d}']) for i in xs] if len(bot20_both)>0 else [np.nan]*len(xs), color='#f85149', linewidth=2.0, label=f'AND N={len(bot20_both)}')
+    ax.plot(xs, [aggf(bot20_either[f'PnL_d{i:03d}']) for i in xs], color='#bc8cff', linewidth=1.3, linestyle='--', label=f'OR N={len(bot20_either)}')
+    ax.axhline(0, color='gray', linewidth=0.5, alpha=0.5)
+    ax.set_xlabel('dia tras entrada (d001..d030)'); ax.set_ylabel(f'{title} PnL acumulado (pts)')
+    ax.set_title(f'STT - Setup de HIERRO (BOT20 IVC x VIX) [{title}]')
+    ax.legend(loc='lower left', fontsize=8.5); ax.grid(alpha=0.2)
+fig.tight_layout(); fig.savefig(os.path.join(EVDIR,'stt_iron_composite.png'),facecolor=COL_BG); plt.close(fig)
+print('[SAVED] iron composite dual')
 
 print('\n=== Summary ===')
 print(f'Latest: {data["latest"]}')

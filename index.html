@@ -134,7 +134,7 @@ section#evidence { max-width: 1200px; margin: 28px auto 0 auto; display: flex; f
 
   <!-- TABLE 1: IV_CONV cuts vs RAW -->
   <div class="ev-card">
-    <div class="ev-tag">Tabla 1 / 4 &middot; Cortes IV_CONV pct_expanding</div>
+    <div class="ev-tag">Tabla 1 / 5 &middot; Cortes IV_CONV pct_expanding</div>
     <h2>Edge de IV_CONV por percentil vs RAW</h2>
     <p>Cohortes definidas por percentil expanding del IV_CONV al dia de entrada. RAW es el universo entero (sin filtro).
        <code>mean d001-d030</code> es el promedio de los 30 PnL diarios; <code>edge</code> es la diferencia vs RAW.</p>
@@ -151,7 +151,7 @@ section#evidence { max-width: 1200px; margin: 28px auto 0 auto; display: flex; f
 
   <!-- TABLE 2: VIX cuts vs RAW -->
   <div class="ev-card">
-    <div class="ev-tag">Tabla 2 / 4 &middot; Cortes VIX percentil</div>
+    <div class="ev-tag">Tabla 2 / 5 &middot; Cortes VIX percentil</div>
     <h2>Edge de VIX por percentil vs RAW</h2>
     <p>Mismo formato, ahora con VIX al dia de entrada (percentil rank simple sobre el universo).
        Notese que VIX en aislamiento tiene mas edge que IV_CONV: la mayor parte del aparente edge
@@ -163,11 +163,12 @@ section#evidence { max-width: 1200px; margin: 28px auto 0 auto; display: flex; f
       </thead>
       <tbody></tbody>
     </table>
+    <img src="evidence/stt_pnl_trajectory_vix.png" alt="PnL trajectory by VIX cut [mean | median]" loading="lazy">
   </div>
 
   <!-- TABLE 3: IVC x VIX joint 3x3 -->
   <div class="ev-card">
-    <div class="ev-tag">Tabla 3 / 4 &middot; Conjuncion IV_CONV x VIX</div>
+    <div class="ev-tag">Tabla 3 / 5 &middot; Conjuncion IV_CONV x VIX</div>
     <h2>Cohortes 3x3 IVC x VIX</h2>
     <p>Particionamos IV_CONV pct y VIX pct en bajo/medio/alto (terciles) y cruzamos.
        Solo se muestran celdas con N&ge;20 trades. Vease el heatmap para localizar la celda de oro.</p>
@@ -184,7 +185,7 @@ section#evidence { max-width: 1200px; margin: 28px auto 0 auto; display: flex; f
 
   <!-- TABLE 4: AND/OR composite -->
   <div class="ev-card">
-    <div class="ev-tag">Tabla 4 / 4 &middot; Composite AND/OR (TOP20)</div>
+    <div class="ev-tag">Tabla 4 / 5 &middot; Composite AND/OR (TOP20)</div>
     <h2>Setup de oro: interseccion TOP20 IVC y TOP20 VIX</h2>
     <p>Comparativa directa: cada senal sola, su interseccion (AND) y su union (OR).
        <strong>Setup de oro = AND</strong>: cuando ambos estan en su TOP20%, edge maximo.
@@ -197,6 +198,28 @@ section#evidence { max-width: 1200px; margin: 28px auto 0 auto; display: flex; f
       <tbody></tbody>
     </table>
     <img src="evidence/stt_and_or_composite.png" alt="AND/OR composite trajectory [mean | median]" loading="lazy">
+  </div>
+
+  <!-- TABLE 5: SETUP DE HIERRO (BOT20) -->
+  <div class="ev-card">
+    <div class="ev-tag">Tabla 5 / 5 &middot; Composite BOT20 (lo peor)</div>
+    <h2>Setup de Hierro: interseccion BOT20 IVC y BOT20 VIX</h2>
+    <p>El reverso del Setup de Oro: cada senal en su <strong>BOT20%</strong> (concavidad baja / VIX bajo),
+       su interseccion (AND) y su union (OR). <strong>Setup de Hierro = AND</strong>: ambos en su peor
+       quintil simultaneamente. Es la cohorte a EVITAR.</p>
+    <table class="ev-table dual" id="tbl-iron">
+      <thead>
+        <tr><th rowspan="2">Cohorte</th><th rowspan="2">N</th><th rowspan="2">dias</th><th colspan="2">d020</th><th colspan="2">d030</th><th colspan="2">avg d1-d30</th><th colspan="2">edge avg</th><th rowspan="2">WR d030</th><th rowspan="2">PF d030</th></tr>
+        <tr><th>mean</th><th>med</th><th>mean</th><th>med</th><th>mean</th><th>med</th><th>mean</th><th>med</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+    <div class="ev-callout bad" style="margin-top:10px">
+      <strong>AND BOT20 (Hierro)</strong>: mean d030 negativo y PF&lt;1 (pierde dinero en media). En MEDIAN
+      sigue positivo (el trade tipico no pierde), pero el WR cae a ~58% y la cola izquierda domina.
+      Cohorte de NO-ENTRADA: concavidad baja + VIX bajo = complacencia sin prima de cola.
+    </div>
+    <img src="evidence/stt_iron_composite.png" alt="Iron composite BOT20 trajectory [mean | median]" loading="lazy">
   </div>
 
 </section>
@@ -266,6 +289,7 @@ fetch('data.json?v=' + Date.now()).then(r => r.json()).then(data => {
   fillTbl('tbl-vix', data.tbl_vix);
   fillTbl('tbl-joint', data.tbl_joint);
   fillTbl('tbl-combo', data.tbl_combo);
+  if (data.tbl_iron) fillTbl('tbl-iron', data.tbl_iron);
 
   // Time series chart
   const dates = data.series.map(d => d.t);

@@ -7723,6 +7723,73 @@
       "pf30": 9.9
     }
   ],
+  "tbl_iron": [
+    {
+      "label": "RAW universo",
+      "n": 1629,
+      "days": 1223,
+      "d20_mean": 1.85,
+      "d20_med": 3.05,
+      "d30_mean": 2.61,
+      "d30_med": 4.35,
+      "avg_mean": 1.4,
+      "avg_med": 2.38,
+      "wr30": 88.0,
+      "pf30": 2.04
+    },
+    {
+      "label": "BOT20 IVC solo",
+      "n": 95,
+      "days": 87,
+      "d20_mean": -0.28,
+      "d20_med": 1.6,
+      "d30_mean": -1.43,
+      "d30_med": 2.5,
+      "avg_mean": -0.41,
+      "avg_med": 1.22,
+      "wr30": 73.7,
+      "pf30": 0.68
+    },
+    {
+      "label": "BOT20 VIX solo",
+      "n": 326,
+      "days": 235,
+      "d20_mean": -0.66,
+      "d20_med": 1.02,
+      "d30_mean": -0.18,
+      "d30_med": 1.5,
+      "avg_mean": -0.37,
+      "avg_med": 0.73,
+      "wr30": 70.6,
+      "pf30": 0.94
+    },
+    {
+      "label": "BOT20 IVC AND BOT20 VIX (interseccion)",
+      "n": 48,
+      "days": 43,
+      "d20_mean": -0.65,
+      "d20_med": 1.02,
+      "d30_mean": -3.04,
+      "d30_med": 1.78,
+      "avg_mean": -0.85,
+      "avg_med": 0.66,
+      "wr30": 58.3,
+      "pf30": 0.38
+    },
+    {
+      "label": "BOT20 IVC OR BOT20 VIX (union)",
+      "n": 373,
+      "days": 279,
+      "d20_mean": -0.56,
+      "d20_med": 1.15,
+      "d30_mean": -0.13,
+      "d30_med": 1.75,
+      "avg_mean": -0.32,
+      "avg_med": 0.87,
+      "wr30": 72.9,
+      "pf30": 0.96
+    }
+  ],
   "stats": {
     "r_pearson_ivc_vix": 0.3541,
     "r_spearman_pct_vix": 0.6389,
