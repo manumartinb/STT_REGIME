@@ -1,5 +1,5 @@
 """
-Build STT REGIME dashboard (v4: IV_CONV / IV ATM [eje vol, ex-VIX] / PUT SKEW NIVEL)
+Build STT REGIME dashboard (v3: 3 senales estrella IV_CONV / VIX / PUT SKEW NIVEL)
 - 3 senales como percentil expanding 0-100 (ex-ante)
 - Estudios: solas, 2-a-2, 3-a-3. Todas las tablas/charts dual mean+median.
 - data.json + evidence/*.png
@@ -39,21 +39,19 @@ df = df.sort_values('dia').reset_index(drop=True)
 # IV_CONV expanding (sobre dias-trade STT)
 df['ivc_pct'] = expanding_pct(df['IV_CONVEXITY'].values)
 
-# EJE VOL = ATM-IV (iv_50d @dte160), migrado desde VIX en 2026-05.
-# NOTA: por estabilidad del contrato data.json<->index.html, las claves JSON
-# mantienen el nombre legacy 'vix_*' pero CONTIENEN el ATM-IV. Todas las
-# etiquetas visibles dicen "IV ATM". (r +0.45 vs VIX +0.39; tenor casado al trade.)
-print('[2] ATM-IV (iv_50d @dte160) expanding [eje vol, ex-VIX] ...', flush=True)
-psf = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','skew_25d_vs50_pct_expanding','iv_50d'])
-psf['trade_date'] = pd.to_datetime(psf['trade_date']).dt.normalize()
-psf160 = psf[psf['dte_target']==160].copy()
-atm = psf160[['trade_date','iv_50d']].rename(columns={'trade_date':'dia','iv_50d':'VIX_Close'}).dropna().sort_values('dia').reset_index(drop=True)
-atm['vix_pct'] = expanding_pct(atm['VIX_Close'].values)   # vix_pct (legacy key) = ATM-IV pct
-df = df.merge(atm[['dia','VIX_Close','vix_pct']], on='dia', how='left')
+# VIX expanding (sobre serie diaria VIX completa)
+print('[2] VIX expanding ...', flush=True)
+vix = pd.read_csv(VIX_PATH, parse_dates=['time']).rename(columns={'time':'dia','close':'VIX_Close'})[['dia','VIX_Close']]
+vix['dia']=vix['dia'].dt.normalize()
+vix = vix.dropna(subset=['VIX_Close']).sort_values('dia').reset_index(drop=True)
+vix['vix_pct'] = expanding_pct(vix['VIX_Close'].values)
+df = df.merge(vix[['dia','VIX_Close','vix_pct']], on='dia', how='left')
 
 # PUT SKEW NIVEL: skew_25d_vs50_pct_expanding @ dte160 (col canonica del file)
 print('[3] PUT SKEW NIVEL @ dte160 ...', flush=True)
-ps = psf160[['trade_date','skew_25d_vs50_pct_expanding']].rename(
+ps = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','skew_25d_vs50_pct_expanding'])
+ps['trade_date'] = pd.to_datetime(ps['trade_date']).dt.normalize()
+ps = ps[ps['dte_target']==160][['trade_date','skew_25d_vs50_pct_expanding']].rename(
     columns={'trade_date':'dia','skew_25d_vs50_pct_expanding':'ps_pct'})
 df = df.merge(ps, on='dia', how='left')
 
@@ -64,7 +62,7 @@ print(f'    N={len(sub)}  dias={sub["dia"].dt.date.nunique()}  ps_cov={df["ps_pc
 RAW_AVG_MEAN = sub[pnl_cols].mean().mean()
 RAW_AVG_MED  = sub[pnl_cols].median().mean()
 
-SIGS = {'ivc': ('ivc_pct','IV_CONV'), 'vix': ('vix_pct','IV ATM'), 'ps': ('ps_pct','PUT SKEW')}
+SIGS = {'ivc': ('ivc_pct','IV_CONV'), 'vix': ('vix_pct','VIX'), 'ps': ('ps_pct','PUT SKEW')}
 
 def banda(p):
     if p>=80: return 'FAVORABLE'
@@ -114,7 +112,7 @@ def solo_table(col, name):
         t.append(cohort(sub[sub[col]<=thr], lbl))
     return t
 data['tbl_ivc']=solo_table('ivc_pct','IVC')
-data['tbl_vix']=solo_table('vix_pct','IVATM')
+data['tbl_vix']=solo_table('vix_pct','VIX')
 data['tbl_ps'] =solo_table('ps_pct','PS')
 
 # ---------- 2x2 joint (terciles) ----------
@@ -126,9 +124,9 @@ def joint_table(colA,colB,labA,labB):
             ss=sub[(sub[colA]>=alo)&(sub[colA]<=ahi)&(sub[colB]>=blo)&(sub[colB]<=bhi)]
             if len(ss)>=20: t.append(cohort(ss,f'{labA} {la} & {labB} {lb}'))
     return t
-data['tbl_joint_iv']=joint_table('ivc_pct','vix_pct','IVC','IV ATM')
+data['tbl_joint_iv']=joint_table('ivc_pct','vix_pct','IVC','VIX')
 data['tbl_joint_ip']=joint_table('ivc_pct','ps_pct','IVC','PS')
-data['tbl_joint_vp']=joint_table('vix_pct','ps_pct','IV ATM','PS')
+data['tbl_joint_vp']=joint_table('vix_pct','ps_pct','VIX','PS')
 
 # ---------- 2x2 composite (gold + iron) ----------
 def combo_table(colA,colB,labA,labB):
@@ -139,9 +137,9 @@ def combo_table(colA,colB,labA,labB):
             cohort(tA,f'TOP20 {labA} solo'), cohort(tB,f'TOP20 {labB} solo'),
             cohort(tAND,f'AND TOP20 {labA}+{labB} (ORO)'), cohort(tOR,f'OR TOP20 {labA}|{labB}'),
             cohort(bAND,f'AND BOT20 {labA}+{labB} (HIERRO)'), cohort(bOR,f'OR BOT20 {labA}|{labB}')]
-data['tbl_combo_iv']=combo_table('ivc_pct','vix_pct','IVC','IV ATM')
+data['tbl_combo_iv']=combo_table('ivc_pct','vix_pct','IVC','VIX')
 data['tbl_combo_ip']=combo_table('ivc_pct','ps_pct','IVC','PS')
-data['tbl_combo_vp']=combo_table('vix_pct','ps_pct','IV ATM','PS')
+data['tbl_combo_vp']=combo_table('vix_pct','ps_pct','VIX','PS')
 
 # ---------- 3x3 triple ----------
 top = {k:(sub[SIGS[k][0]]>=80) for k in SIGS}
@@ -151,7 +149,7 @@ n_bot = bot['ivc'].astype(int)+bot['vix'].astype(int)+bot['ps'].astype(int)
 data['tbl_triple']=[
     cohort(sub,'RAW universo'),
     cohort(sub[top['ivc']],'TOP20 IVC solo'),
-    cohort(sub[top['vix']],'TOP20 IV ATM solo'),
+    cohort(sub[top['vix']],'TOP20 VIX solo'),
     cohort(sub[top['ps']], 'TOP20 PS solo'),
     cohort(sub[top['ivc']&top['vix']&top['ps']],'AND TOP20 las 3 (ORO TRIPLE)'),
     cohort(sub[n_top>=2],'al menos 2 de 3 TOP20'),
@@ -240,20 +238,20 @@ def triple_dual(fname):
         line(IRON3,'#f85149','AND BOT 3 (HIERRO)',1.6)
         ax.axhline(0,color='gray',linewidth=0.5,alpha=0.5); ax.grid(alpha=0.2)
         ax.set_xlabel('dia (d001..d030)'); ax.set_ylabel(f'{ttl} PnL acum (pts)')
-        ax.set_title(f'STT - Triple IVC x IV ATM x PS [{ttl}]'); ax.legend(loc='upper left',fontsize=8)
+        ax.set_title(f'STT - Triple IVC x VIX x PS [{ttl}]'); ax.legend(loc='upper left',fontsize=8)
     fig.tight_layout(); fig.savefig(os.path.join(EVDIR,fname),facecolor=COL_BG); plt.close(fig)
     print(f'    [chart] {fname}')
 
 print('[5] charts ...', flush=True)
 traj_dual('ivc_pct','IV_CONV','traj_ivc.png')
-traj_dual('vix_pct','IV ATM','traj_vix.png')
+traj_dual('vix_pct','VIX','traj_vix.png')
 traj_dual('ps_pct','PUT SKEW','traj_ps.png')
-heat_dual('ivc_pct','vix_pct','IVC','IV ATM','heat_iv.png')
+heat_dual('ivc_pct','vix_pct','IVC','VIX','heat_iv.png')
 heat_dual('ivc_pct','ps_pct','IVC','PS','heat_ip.png')
-heat_dual('vix_pct','ps_pct','IV ATM','PS','heat_vp.png')
-combo_dual('ivc_pct','vix_pct','IVC','IV ATM','comp_iv.png')
+heat_dual('vix_pct','ps_pct','VIX','PS','heat_vp.png')
+combo_dual('ivc_pct','vix_pct','IVC','VIX','comp_iv.png')
 combo_dual('ivc_pct','ps_pct','IVC','PS','comp_ip.png')
-combo_dual('vix_pct','ps_pct','IV ATM','PS','comp_vp.png')
+combo_dual('vix_pct','ps_pct','VIX','PS','comp_vp.png')
 triple_dual('comp_triple.png')
 
 print('\n=== Summary ===')

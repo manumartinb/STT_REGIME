@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>STT REGIME - IV_CONV / IV ATM / PUT SKEW NIVEL</title>
+<title>STT REGIME - IV_CONV / VIX / PUT SKEW NIVEL</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
 <style>
@@ -69,7 +69,7 @@ section.evidence { max-width:1200px; margin:0 auto; display:flex; flex-direction
 <body>
 <div class="header">
   <div>
-    <h1>STT REGIME - IV_CONV / IV ATM / PUT SKEW NIVEL</h1>
+    <h1>STT REGIME - IV_CONV / VIX / PUT SKEW NIVEL</h1>
     <div class="subtitle">3 senales de regimen sobre STT (PUT BWB +K1 -2K2 +K3, DTE 150-170) - percentil expanding ex-ante</div>
   </div>
   <div class="latest-group">
@@ -80,9 +80,9 @@ section.evidence { max-width:1200px; margin:0 auto; display:flex; flex-direction
       <div class="hint">&uarr; mas alto = mejor (FAV &ge;80)</div>
     </div>
     <div class="latest">
-      <div class="label">IV ATM pct</div>
+      <div class="label">VIX pct</div>
       <div><span class="v" id="ld-vix">--</span><span class="regime" id="lr-vix">--</span></div>
-      <div class="mini">IV ATM: <span id="ld-vixraw">--</span></div>
+      <div class="mini">VIX: <span id="ld-vixraw">--</span></div>
       <div class="hint">&uarr; mas alto = mejor (FAV &ge;80)</div>
     </div>
     <div class="latest">
@@ -99,7 +99,7 @@ section.evidence { max-width:1200px; margin:0 auto; display:flex; flex-direction
 <div class="note">
   <strong>3 senales canonicas STT</strong>, todas como <strong>percentil expanding</strong> (0-100, sin lookahead):
   <strong>IV_CONV</strong> = <code>(iv_k1+iv_k3)/2 - iv_k2</code> (concavidad de la PUT smile, Werner) rankeada sobre dias-trade STT &middot;
-  <strong>IV ATM</strong> = nivel IV ATM (iv_50d) @dte160 percentil expanding (eje vol, migrado desde VIX) &middot;
+  <strong>VIX</strong> = nivel VIX rankeado sobre su serie diaria completa &middot;
   <strong>PUT SKEW NIVEL</strong> = <code>skew_25d_vs50_pct_expanding</code> @ dte160 (prima de cola en puts, 25d vs ATM).
   Bandas: <strong>FAVORABLE</strong> &ge;80, <strong>NEUTRAL</strong> 20-80, <strong>ADVERSO</strong> &le;20.
   Universo: STT V9 2019-2025, las 3 senales presentes.
@@ -111,7 +111,7 @@ section.evidence { max-width:1200px; margin:0 auto; display:flex; flex-direction
   <h3>Como combinarlas</h3>
   <ul>
     <li><strong>IVC + PUT SKEW es la mejor pareja</strong>: son las menos solapadas (rho ~+0.20). Cada una aporta info nueva. AND de ambas en TOP20 = setup de oro de par.</li>
-    <li><strong>IV ATM es el predictor mas fuerte en solitario</strong> (r~+0.45) pero se solapa con IVC (rho ~+0.49) y con PUT SKEW (rho ~+0.58): anade menos en combinacion.</li>
+    <li><strong>VIX es el predictor mas fuerte en solitario</strong> (r~+0.39) pero se solapa con IVC (rho ~+0.51) y con PUT SKEW (rho ~+0.60): anade menos en combinacion.</li>
     <li><strong>Triple AND</strong> (las 3 &ge;P80): cohorte mas selectiva, mayor WR, pero N pequeno. Ver seccion 3-a-3.</li>
     <li><strong>EVITAR</strong> el HIERRO: las 3 (o pares) en BOT20 simultaneo - cohorte de no-entrada.</li>
   </ul>
@@ -122,9 +122,9 @@ section.evidence { max-width:1200px; margin:0 auto; display:flex; flex-direction
   <div class="ev-card"><div class="ev-tag">A1 &middot; IV_CONV pct_expanding</div><h2>IV_CONV sola</h2>
     <table class="ev-table dual" id="tbl-ivc"></table>
     <img src="evidence/traj_ivc.png" alt="trayectoria IVC" loading="lazy"></div>
-  <div class="ev-card"><div class="ev-tag">A2 &middot; IV ATM pct_expanding</div><h2>IV ATM sola</h2>
+  <div class="ev-card"><div class="ev-tag">A2 &middot; VIX pct_expanding</div><h2>VIX sola</h2>
     <table class="ev-table dual" id="tbl-vix"></table>
-    <img src="evidence/traj_vix.png" alt="trayectoria IV ATM" loading="lazy"></div>
+    <img src="evidence/traj_vix.png" alt="trayectoria VIX" loading="lazy"></div>
   <div class="ev-card"><div class="ev-tag">A3 &middot; PUT SKEW NIVEL</div><h2>PUT SKEW sola</h2>
     <table class="ev-table dual" id="tbl-ps"></table>
     <img src="evidence/traj_ps.png" alt="trayectoria PS" loading="lazy"></div>
@@ -132,23 +132,23 @@ section.evidence { max-width:1200px; margin:0 auto; display:flex; flex-direction
 
 <div class="section-title">Seccion B &middot; 2 A 2 (joint terciles + composite ORO/HIERRO)</div>
 <section class="evidence">
-  <div class="ev-card"><div class="ev-tag">B1 &middot; IVC x IV ATM</div><h2>IVC x IV ATM</h2>
-    <img src="evidence/heat_iv.png" alt="heatmap IVC x IV ATM" loading="lazy">
+  <div class="ev-card"><div class="ev-tag">B1 &middot; IVC x VIX</div><h2>IVC x VIX</h2>
+    <img src="evidence/heat_iv.png" alt="heatmap IVC x VIX" loading="lazy">
     <table class="ev-table dual" id="tbl-combo-iv"></table>
-    <img src="evidence/comp_iv.png" alt="composite IVC x IV ATM" loading="lazy"></div>
+    <img src="evidence/comp_iv.png" alt="composite IVC x VIX" loading="lazy"></div>
   <div class="ev-card"><div class="ev-tag">B2 &middot; IVC x PUT SKEW (par mas ortogonal)</div><h2>IVC x PUT SKEW</h2>
     <img src="evidence/heat_ip.png" alt="heatmap IVC x PS" loading="lazy">
     <table class="ev-table dual" id="tbl-combo-ip"></table>
     <img src="evidence/comp_ip.png" alt="composite IVC x PS" loading="lazy"></div>
-  <div class="ev-card"><div class="ev-tag">B3 &middot; IV ATM x PUT SKEW</div><h2>IV ATM x PUT SKEW</h2>
-    <img src="evidence/heat_vp.png" alt="heatmap IV ATM x PS" loading="lazy">
+  <div class="ev-card"><div class="ev-tag">B3 &middot; VIX x PUT SKEW</div><h2>VIX x PUT SKEW</h2>
+    <img src="evidence/heat_vp.png" alt="heatmap VIX x PS" loading="lazy">
     <table class="ev-table dual" id="tbl-combo-vp"></table>
-    <img src="evidence/comp_vp.png" alt="composite IV ATM x PS" loading="lazy"></div>
+    <img src="evidence/comp_vp.png" alt="composite VIX x PS" loading="lazy"></div>
 </section>
 
 <div class="section-title">Seccion C &middot; 3 A 3 (las tres combinadas)</div>
 <section class="evidence">
-  <div class="ev-card"><div class="ev-tag">C &middot; IVC x IV ATM x PUT SKEW</div><h2>Triple composite</h2>
+  <div class="ev-card"><div class="ev-tag">C &middot; IVC x VIX x PUT SKEW</div><h2>Triple composite</h2>
     <p>RAW + cada senal sola TOP20 + AND de las 3 (oro triple) + al menos 2 de 3 + OR cualquiera + AND BOT20 de las 3 (hierro triple).</p>
     <table class="ev-table dual" id="tbl-triple"></table>
     <img src="evidence/comp_triple.png" alt="triple composite" loading="lazy"></div>
@@ -159,13 +159,13 @@ section.evidence { max-width:1200px; margin:0 auto; display:flex; flex-direction
   <div class="ev-card"><div class="ev-tag">D &middot; Spearman</div><h2>Matriz de correlacion entre senales + poder predictivo</h2>
     <table class="corr-table" id="corr-matrix"></table>
     <div id="corr-pnl" style="font-size:13px;color:#b6bec9;line-height:1.7;margin-top:10px"></div>
-    <p style="margin-top:10px"><strong>Lectura</strong>: el par <strong>IVC x PUT SKEW</strong> es el de menor solapamiento - combinar ambas aporta diversificacion real. IV ATM, aunque mas predictivo solo, comparte mas varianza con las otras dos.</p>
+    <p style="margin-top:10px"><strong>Lectura</strong>: el par <strong>IVC x PUT SKEW</strong> es el de menor solapamiento - combinar ambas aporta diversificacion real. VIX, aunque mas predictivo solo, comparte mas varianza con las otras dos.</p>
   </div>
 </section>
 
 <div class="footer">
   Universo: <span id="meta-universe">--</span> &middot; metrica PnL_d020/d030 (pts sobre net_credit) &middot;
-  IV ATM en percentil <span id="meta-vixmethod">expanding</span> &middot; regenera: update_dashboard.py
+  VIX en percentil <span id="meta-vixmethod">expanding</span> &middot; regenera: update_dashboard.py
 </div>
 
 <script>
@@ -176,7 +176,7 @@ fetch('data.json?v=' + Date.now()).then(r => r.json()).then(data => {
   document.getElementById('ld-ivc').textContent = L.ivc_pct.toFixed(1); setReg('lr-ivc', L.regime_ivc);
   document.getElementById('ld-ivcraw').textContent = (L.ivc_raw*100).toFixed(3);
   document.getElementById('ld-vix').textContent = L.vix_pct.toFixed(1); setReg('lr-vix', L.regime_vix);
-  document.getElementById('ld-vixraw').textContent = (L.vix_raw*100).toFixed(1)+'%';
+  document.getElementById('ld-vixraw').textContent = L.vix_raw.toFixed(2);
   document.getElementById('ld-ps').textContent = L.ps_pct.toFixed(1); setReg('lr-ps', L.regime_ps);
 
   document.getElementById('meta-universe').textContent =
@@ -192,7 +192,7 @@ fetch('data.json?v=' + Date.now()).then(r => r.json()).then(data => {
     <div class="kpi"><div class="k">RAW avg d1-d30 mean</div><div class="vv">${b.mean_d001_d030>=0?'+':''}${b.mean_d001_d030.toFixed(2)}</div></div>
     <div class="kpi"><div class="k">RAW WR d030</div><div class="vv">${b.wr_d030.toFixed(1)}%</div></div>
     <div class="kpi"><div class="k">r(IVC,PnL)</div><div class="vv">${data.stats.r_ivc_pnl.toFixed(3)}</div></div>
-    <div class="kpi"><div class="k">r(IV ATM,PnL)</div><div class="vv">${data.stats.r_vix_pnl.toFixed(3)}</div></div>
+    <div class="kpi"><div class="k">r(VIX,PnL)</div><div class="vv">${data.stats.r_vix_pnl.toFixed(3)}</div></div>
     <div class="kpi"><div class="k">r(PS,PnL)</div><div class="vv">${data.stats.r_ps_pnl.toFixed(3)}</div></div>`;
 
   const HEAD = `<thead>
@@ -225,27 +225,27 @@ fetch('data.json?v=' + Date.now()).then(r => r.json()).then(data => {
   const s = data.stats;
   const cm = (x) => x.toFixed(2);
   document.getElementById('corr-matrix').innerHTML = `
-    <thead><tr><th></th><th>IVC</th><th>IV ATM</th><th>PUT SKEW</th></tr></thead>
+    <thead><tr><th></th><th>IVC</th><th>VIX</th><th>PUT SKEW</th></tr></thead>
     <tbody>
       <tr><th>IVC</th><td class="diag">1.00</td><td>${cm(s.corr_ivc_vix)}</td><td>${cm(s.corr_ivc_ps)}</td></tr>
-      <tr><th>IV ATM</th><td>${cm(s.corr_ivc_vix)}</td><td class="diag">1.00</td><td>${cm(s.corr_vix_ps)}</td></tr>
+      <tr><th>VIX</th><td>${cm(s.corr_ivc_vix)}</td><td class="diag">1.00</td><td>${cm(s.corr_vix_ps)}</td></tr>
       <tr><th>PUT SKEW</th><td>${cm(s.corr_ivc_ps)}</td><td>${cm(s.corr_vix_ps)}</td><td class="diag">1.00</td></tr>
     </tbody>`;
   document.getElementById('corr-pnl').innerHTML =
-    `Spearman r vs PnL_d030: <strong>IVC ${s.r_ivc_pnl.toFixed(3)}</strong> &middot; <strong>IV ATM ${s.r_vix_pnl.toFixed(3)}</strong> &middot; <strong>PUT SKEW ${s.r_ps_pnl.toFixed(3)}</strong>. ` +
+    `Spearman r vs PnL_d030: <strong>IVC ${s.r_ivc_pnl.toFixed(3)}</strong> &middot; <strong>VIX ${s.r_vix_pnl.toFixed(3)}</strong> &middot; <strong>PUT SKEW ${s.r_ps_pnl.toFixed(3)}</strong>. ` +
     `Par menos correlacionado: IVC x PUT SKEW (rho ${s.corr_ivc_ps.toFixed(2)}).`;
 
-  // Time series: 3 pct lines + IV ATM raw secondary
+  // Time series: 3 pct lines + VIX raw secondary
   const t = data.series.map(d=>d.t);
   const mk = (y,name,color,axis) => ({x:t, y:data.series.map(d=>d[y]), name, type:'scatter', mode:'lines', line:{color,width:1.1}, yaxis:axis||'y', hovertemplate:'%{x}<br>'+name+': <b>%{y:.1f}</b><extra></extra>'});
-  const traces = [ mk('ivc','IV_CONV pct','#58a6ff'), mk('vix','IV ATM pct','#ff9f43'), mk('ps','PUT SKEW pct','#bc8cff'),
-                   {x:t, y:data.series.map(d=>d.vraw), name:'IV ATM raw', type:'scatter', mode:'lines', line:{color:'#6e7681',width:0.7,dash:'dot'}, yaxis:'y2', hovertemplate:'%{x}<br>IV ATM raw: <b>%{y:.3f}</b><extra></extra>'} ];
+  const traces = [ mk('ivc','IV_CONV pct','#58a6ff'), mk('vix','VIX pct','#ff9f43'), mk('ps','PUT SKEW pct','#bc8cff'),
+                   {x:t, y:data.series.map(d=>d.vraw), name:'VIX raw', type:'scatter', mode:'lines', line:{color:'#6e7681',width:0.7,dash:'dot'}, yaxis:'y2', hovertemplate:'%{x}<br>VIX raw: <b>%{y:.1f}</b><extra></extra>'} ];
   Plotly.newPlot('chart', traces, {
     paper_bgcolor:'#161b22', plot_bgcolor:'#161b22', font:{color:'#c9d1d9',size:11},
     margin:{l:48,r:54,t:30,b:38},
     xaxis:{showgrid:true,gridcolor:'#21262d',zeroline:false},
     yaxis:{title:'percentil (0-100)',range:[0,100],showgrid:true,gridcolor:'#21262d'},
-    yaxis2:{title:'IV ATM raw',overlaying:'y',side:'right',showgrid:false,tickfont:{color:'#6e7681'}},
+    yaxis2:{title:'VIX raw',overlaying:'y',side:'right',showgrid:false,tickfont:{color:'#6e7681'}},
     legend:{x:0.01,y:1.08,orientation:'h',bgcolor:'rgba(22,27,34,0.7)'},
     shapes:[{type:'line',xref:'paper',x0:0,x1:1,y0:80,y1:80,line:{color:'#3fb950',width:1,dash:'dot'}},
             {type:'line',xref:'paper',x0:0,x1:1,y0:20,y1:20,line:{color:'#f85149',width:1,dash:'dot'}}]

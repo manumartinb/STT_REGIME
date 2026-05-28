@@ -1,4 +1,4 @@
-# STT REGIME - IV_CONV / VIX / PUT SKEW NIVEL
+# STT REGIME - IV_CONV / IV ATM / PUT SKEW NIVEL
 
 Dashboard de 3 senales de regimen validadas contra STT V9 (PUT BWB +K1 -2K2 +K3,
 DTE 150-170, 1,629 trades + 1,223 dias unicos, 2019-2025).
@@ -10,7 +10,7 @@ DTE 150-170, 1,629 trades + 1,223 dias unicos, 2019-2025).
 | Senal | Definicion | r vs PnL_d030 |
 |---|---|---|
 | IV_CONV | `(iv_k1+iv_k3)/2 - iv_k2` (concavidad PUT smile, Werner) | +0.32 |
-| VIX | nivel VIX (percentil expanding) | +0.39 |
+| IV ATM | nivel IV ATM (iv_50d) @dte160, percentil expanding (eje vol, ex-VIX) | +0.45 |
 | PUT SKEW NIVEL | `skew_25d_vs50_pct_expanding` @ dte160 | +0.25 |
 
 Bandas: FAVORABLE >=80, NEUTRAL 20-80, ADVERSO <=20.
@@ -19,13 +19,13 @@ Bandas: FAVORABLE >=80, NEUTRAL 20-80, ADVERSO <=20.
 
 - **PUT SKEW NIVEL converge con Batman LT** (puts caros = favorable) y es la senal
   menos solapada con IVC (rho ~+0.20): el par IVC + PUT SKEW es el mejor para combinar.
-- **VIX** es el predictor mas fuerte en solitario pero se solapa con IVC (rho ~+0.51)
+- **IV ATM** (eje vol, migrado desde VIX 2026-05) es el predictor mas fuerte en solitario pero solapa con IVC (rho ~+0.49)
   y PUT SKEW (rho ~+0.60).
 - **Triple AND** (las 3 >=P80): cohorte mas selectiva (N pequeno, WR alto).
 - **SDEX descartado**: no transfiere a STT (r=-0.11, patron en U).
 - **BB sobre IV_CONV descartado**: inferior a pct_expanding (BB-90 r=+0.19 vs
   pct_exp +0.32; BB largo ~200 converge pero no supera).
-- VIX expanding mantiene poder (gate r_d030 +0.39 vs rank +0.42).
+- Migracion VIX -> IV ATM (iv_50d @160): r +0.45 vs +0.39, tenor casado al trade, self-sourced (SKEW_PUT_ENRICHED).
 
 ## Estructura del estudio
 
