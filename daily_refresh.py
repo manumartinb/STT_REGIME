@@ -29,6 +29,9 @@ DIR  = os.path.dirname(os.path.abspath(__file__))
 DATA = os.path.join(DIR, 'data.json')
 PS_PATH  = r'C:/Users/Administrator/Desktop/BULK OPTIONSTRAT/ESTRATEGIAS/Skew/SKEW_PUT_ENRICHED.csv'
 SPX_PATH = r'C:/Users/Administrator/Desktop/FINAL DATA/SP_SPX_CLOSE_HISTORICAL_PRICES.csv'
+PARQUET_DIR = r'C:/Users/Administrator/Desktop/FINAL DATA/HIST AND STREAMING DATA/UPDATED HISTORICAL DAYS PARQUET'
+sys.path.insert(0, DIR)
+import stt_heal  # saneamiento dias glitch r=0 (autocontenido, no-op si no hay glitch)
 
 def log(m): print(f"[STT-REFRESH {datetime.now():%H:%M:%S}] {m}", flush=True)
 
@@ -58,11 +61,14 @@ def main():
             log(f"data.json no existe en {DIR} -> regenera primero con update_dashboard.py"); return 1
         data = json.load(open(DATA, encoding='utf-8'))
 
-        ps = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','iv_5d','iv_15d','iv_30d','iv_50d','skew_25d_vs50'])
+        ps = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','iv_5d','iv_15d','iv_30d','iv_50d',
+                                           'skew_25d_vs50','underlying_price','strike_hit_50d','expiration_used'])
         ps['dia'] = pd.to_datetime(ps['trade_date']).dt.normalize()
         ps = ps[ps['dte_target']==160].sort_values('dia').reset_index(drop=True)
         if len(ps) < 100:
             log(f"SKEW_PUT_ENRICHED @dte160 insuficiente (N={len(ps)})"); return 2
+        # SANEAR dias glitch r=0 (forward colapsado) desde parquet crudo con tasa real. No-op si no hay.
+        ps = stt_heal.heal(ps, PARQUET_DIR, log=log)
         # Suavizado 3d ex-ante del RAW antes de percentilizar. BLOQUE IDENTICO a update_dashboard.py
         # (seccion panel): mata outliers de 1 dia en la fuente. PUT SKEW recalc local del raw.
         ps['ivc_raw'] = (ps['iv_5d']+ps['iv_30d'])/2 - ps['iv_15d']

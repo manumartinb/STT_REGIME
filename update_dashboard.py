@@ -18,6 +18,10 @@ os.makedirs(EVDIR, exist_ok=True)
 PATH = r'C:/Users/Administrator/Desktop/Backtests DATABASE/STT/STT_CLASSIC_V9_MERGED_T0_mediana.csv'
 VIX_PATH = r'C:/Users/Administrator/Desktop/FINAL DATA/VIX_CLOSE_HISTORICAL_PRICES.csv'
 PS_PATH  = r'C:/Users/Administrator/Desktop/BULK OPTIONSTRAT/ESTRATEGIAS/Skew/SKEW_PUT_ENRICHED.csv'
+# Parquets 30MIN crudos (solo lectura) para sanar dias glitch r=0 (ver stt_heal.py)
+PARQUET_DIR = r'C:/Users/Administrator/Desktop/FINAL DATA/HIST AND STREAMING DATA/UPDATED HISTORICAL DAYS PARQUET'
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import stt_heal
 
 pnl_cols = [f'PnL_d{i:03d}' for i in range(1, 31)]
 xs = list(range(1, 31))
@@ -185,10 +189,13 @@ data['stats']={
 #   PUT SKEW = skew_25d_vs50 (raw)           -> smooth3 -> expanding_pct (recalc local)
 #   IV_CONV = proxy (iv_5d+iv_30d)/2 - iv_15d -> smooth3 -> expanding_pct  [rho +0.84 con trade-specific]
 # Las 3 senales se suavizan 3d (ex-ante) antes de percentilizar. BLOQUE IDENTICO a daily_refresh.py.
-print('[6] Serie diaria regimen-a-hoy (chart/panel) SUAVIZADO 3d ...', flush=True)
-dpsf = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','iv_5d','iv_15d','iv_30d','iv_50d','skew_25d_vs50'])
+print('[6] Serie diaria regimen-a-hoy (chart/panel) SUAVIZADO 3d + HEAL r=0 ...', flush=True)
+dpsf = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','iv_5d','iv_15d','iv_30d','iv_50d',
+                                     'skew_25d_vs50','underlying_price','strike_hit_50d','expiration_used'])
 dpsf['dia'] = pd.to_datetime(dpsf['trade_date']).dt.normalize()
 dpsf = dpsf[dpsf['dte_target']==160].sort_values('dia').reset_index(drop=True)
+# SANEAR dias glitch r=0 (forward colapsado) desde parquet crudo con tasa real. No-op si no hay glitch.
+dpsf = stt_heal.heal(dpsf, PARQUET_DIR, log=lambda m: print('    '+m, flush=True))
 dpsf['ivc_proxy_raw'] = (dpsf['iv_5d']+dpsf['iv_30d'])/2 - dpsf['iv_15d']
 dpsf['ivc_d'] = expanding_pct(smooth3(dpsf['ivc_proxy_raw'].values))
 dpsf['atm_d'] = expanding_pct(smooth3(dpsf['iv_50d'].values))
