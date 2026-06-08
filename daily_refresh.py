@@ -7,10 +7,10 @@ Refresca SOLO el grafico/panel vivo del dashboard STT_REGIME:
   - NO toca las tablas/deciles/stats (estudio backtest frozen) ni los PNGs.
   - git add data.json + commit + push origin main (SSH).
 
-Senales (percentil expanding 0-100, ex-ante):
-  IV_CONV  = proxy mercado (iv_5d+iv_30d)/2 - iv_15d @dte160 (rho +0.84 con trade-specific)
-  IV ATM   = iv_50d @dte160
-  PUT SKEW = skew_25d_vs50_pct_expanding @dte160
+Senales (percentil expanding 0-100, ex-ante; RAW suavizado mediana movil 3d antes de percentilizar):
+  IV_CONV  = smooth3((iv_5d+iv_30d)/2 - iv_15d) @dte160 (rho +0.84 con trade-specific)
+  IV ATM   = smooth3(iv_50d) @dte160
+  PUT SKEW = smooth3(skew_25d_vs50) @dte160 (recalc local del raw, homogeneo con IV ATM)
 Secundario del chart: SPX close.
 
 Exit codes (compatibles con run_dashboard_generic de V2):
@@ -40,6 +40,10 @@ def expanding_pct(v, w=30):
             insort(acc,float(x))
     return out
 
+def smooth3(s):
+    # Mediana movil trailing 3d (hoy + 2 dias previos), ex-ante. IDENTICA a update_dashboard.py.
+    return pd.Series(s).rolling(3, min_periods=1).median().values
+
 def banda(p):
     if p>=80: return 'FAVORABLE'
     if p<=20: return 'ADVERSO'
@@ -54,15 +58,17 @@ def main():
             log(f"data.json no existe en {DIR} -> regenera primero con update_dashboard.py"); return 1
         data = json.load(open(DATA, encoding='utf-8'))
 
-        ps = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','iv_5d','iv_15d','iv_30d','iv_50d','skew_25d_vs50_pct_expanding'])
+        ps = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','iv_5d','iv_15d','iv_30d','iv_50d','skew_25d_vs50'])
         ps['dia'] = pd.to_datetime(ps['trade_date']).dt.normalize()
         ps = ps[ps['dte_target']==160].sort_values('dia').reset_index(drop=True)
         if len(ps) < 100:
             log(f"SKEW_PUT_ENRICHED @dte160 insuficiente (N={len(ps)})"); return 2
+        # Suavizado 3d ex-ante del RAW antes de percentilizar. BLOQUE IDENTICO a update_dashboard.py
+        # (seccion panel): mata outliers de 1 dia en la fuente. PUT SKEW recalc local del raw.
         ps['ivc_raw'] = (ps['iv_5d']+ps['iv_30d'])/2 - ps['iv_15d']
-        ps['ivc_d'] = expanding_pct(ps['ivc_raw'].values)
-        ps['atm_d'] = expanding_pct(ps['iv_50d'].values)
-        ps['ps_d']  = ps['skew_25d_vs50_pct_expanding']
+        ps['ivc_d'] = expanding_pct(smooth3(ps['ivc_raw'].values))
+        ps['atm_d'] = expanding_pct(smooth3(ps['iv_50d'].values))
+        ps['ps_d']  = expanding_pct(smooth3(ps['skew_25d_vs50'].values))
 
         spx = pd.read_csv(SPX_PATH, usecols=['time','close'])
         spx['dia'] = pd.to_datetime(spx['time']).dt.normalize()

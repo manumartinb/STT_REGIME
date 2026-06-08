@@ -30,6 +30,13 @@ def expanding_pct(series_values, warmup=30):
             insort(acc,float(v))
     return out
 
+def smooth3(s):
+    # Mediana movil trailing 3d (hoy + 2 dias previos), ex-ante (sin lookahead).
+    # Aplica al RAW de las senales day-level de mercado antes de percentilizar, para
+    # matar outliers de 1 dia en la fuente (ej. 29-may: iv_50d cae 16% y revierte).
+    # Validado por APR: r se mantiene, cola (PF) mejora. DEBE ser identica en daily_refresh.py.
+    return pd.Series(s).rolling(3, min_periods=1).median().values
+
 print('[1] Loading STT ...', flush=True)
 df = pd.read_csv(PATH, usecols=['dia','SPX','IV_CONVEXITY']+pnl_cols, low_memory=False)
 df['dia'] = pd.to_datetime(df['dia']).dt.normalize()
@@ -43,19 +50,22 @@ df['ivc_pct'] = expanding_pct(df['IV_CONVEXITY'].values)
 # NOTA: por estabilidad del contrato data.json<->index.html, las claves JSON
 # mantienen el nombre legacy 'vix_*' pero CONTIENEN el ATM-IV. Todas las
 # etiquetas visibles dicen "IV ATM". (r +0.45 vs VIX +0.39; tenor casado al trade.)
-print('[2] ATM-IV (iv_50d @dte160) expanding [eje vol, ex-VIX] ...', flush=True)
-psf = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','skew_25d_vs50_pct_expanding','iv_50d'])
+print('[2] ATM-IV (iv_50d @dte160) expanding SUAVIZADO 3d [eje vol, ex-VIX] ...', flush=True)
+psf = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','skew_25d_vs50','iv_50d'])
 psf['trade_date'] = pd.to_datetime(psf['trade_date']).dt.normalize()
-psf160 = psf[psf['dte_target']==160].copy()
+psf160 = psf[psf['dte_target']==160].copy().sort_values('trade_date').reset_index(drop=True)
+# Suavizado 3d del RAW antes de percentilizar (mata outliers de 1 dia en la fuente).
 atm = psf160[['trade_date','iv_50d']].rename(columns={'trade_date':'dia','iv_50d':'VIX_Close'}).dropna().sort_values('dia').reset_index(drop=True)
-atm['vix_pct'] = expanding_pct(atm['VIX_Close'].values)   # vix_pct (legacy key) = ATM-IV pct
+atm['vix_pct'] = expanding_pct(smooth3(atm['VIX_Close'].values))   # vix_pct (legacy key) = ATM-IV pct (suavizado)
 df = df.merge(atm[['dia','VIX_Close','vix_pct']], on='dia', how='left')
 
-# PUT SKEW NIVEL: skew_25d_vs50_pct_expanding @ dte160 (col canonica del file)
-print('[3] PUT SKEW NIVEL @ dte160 ...', flush=True)
-ps = psf160[['trade_date','skew_25d_vs50_pct_expanding']].rename(
-    columns={'trade_date':'dia','skew_25d_vs50_pct_expanding':'ps_pct'})
-df = df.merge(ps, on='dia', how='left')
+# PUT SKEW NIVEL: recalculo LOCAL del raw skew_25d_vs50 @dte160 suavizado 3d (homogeneo con IV ATM).
+# Antes se usaba la columna pre-calc skew_25d_vs50_pct_expanding; ahora se percentiliza el raw
+# suavizado para homogeneizar metodo y matar outliers (validado APR: corr 1.0 en dias normales).
+print('[3] PUT SKEW NIVEL @ dte160 (raw suavizado 3d, recalc local) ...', flush=True)
+ps = psf160[['trade_date','skew_25d_vs50']].rename(columns={'trade_date':'dia'}).dropna().sort_values('dia').reset_index(drop=True)
+ps['ps_pct'] = expanding_pct(smooth3(ps['skew_25d_vs50'].values))
+df = df.merge(ps[['dia','ps_pct']], on='dia', how='left')
 
 # Universo canonico: las 3 senales presentes (warmup IVC descontado)
 sub = df.dropna(subset=['ivc_pct','vix_pct','ps_pct','IV_CONVEXITY']).reset_index(drop=True)
@@ -171,17 +181,18 @@ data['stats']={
 # Las tablas/stats de arriba quedan FIJAS (backtest STT, IV_CONV trade-specific).
 # El grafico + panel 'latest' se actualizan a la ultima fecha de mercado disponible
 # en SKEW_PUT_ENRICHED @dte160 (como el dashboard PUT_SKEW_NIVEL_BATMAN_LT):
-#   IV ATM  = iv_50d (directo)
-#   PUT SKEW = skew_25d_vs50_pct_expanding (directo)
-#   IV_CONV = proxy de mercado (iv_5d+iv_30d)/2 - iv_15d  [rho +0.84 con la trade-specific]
-print('[6] Serie diaria regimen-a-hoy (chart/panel) ...', flush=True)
-dpsf = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','iv_5d','iv_15d','iv_30d','iv_50d','skew_25d_vs50_pct_expanding'])
+#   IV ATM  = iv_50d                         -> smooth3 -> expanding_pct
+#   PUT SKEW = skew_25d_vs50 (raw)           -> smooth3 -> expanding_pct (recalc local)
+#   IV_CONV = proxy (iv_5d+iv_30d)/2 - iv_15d -> smooth3 -> expanding_pct  [rho +0.84 con trade-specific]
+# Las 3 senales se suavizan 3d (ex-ante) antes de percentilizar. BLOQUE IDENTICO a daily_refresh.py.
+print('[6] Serie diaria regimen-a-hoy (chart/panel) SUAVIZADO 3d ...', flush=True)
+dpsf = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','iv_5d','iv_15d','iv_30d','iv_50d','skew_25d_vs50'])
 dpsf['dia'] = pd.to_datetime(dpsf['trade_date']).dt.normalize()
 dpsf = dpsf[dpsf['dte_target']==160].sort_values('dia').reset_index(drop=True)
 dpsf['ivc_proxy_raw'] = (dpsf['iv_5d']+dpsf['iv_30d'])/2 - dpsf['iv_15d']
-dpsf['ivc_d'] = expanding_pct(dpsf['ivc_proxy_raw'].values)
-dpsf['atm_d'] = expanding_pct(dpsf['iv_50d'].values)
-dpsf['ps_d']  = dpsf['skew_25d_vs50_pct_expanding']
+dpsf['ivc_d'] = expanding_pct(smooth3(dpsf['ivc_proxy_raw'].values))
+dpsf['atm_d'] = expanding_pct(smooth3(dpsf['iv_50d'].values))
+dpsf['ps_d']  = expanding_pct(smooth3(dpsf['skew_25d_vs50'].values))
 # SPX close (cotizacion) para el eje secundario del grafico
 _spx = pd.read_csv(r'C:/Users/Administrator/Desktop/FINAL DATA/SP_SPX_CLOSE_HISTORICAL_PRICES.csv', usecols=['time','close'])
 _spx['dia'] = pd.to_datetime(_spx['time']).dt.normalize()
