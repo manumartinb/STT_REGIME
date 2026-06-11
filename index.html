@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>STT REGIME - IV_CONV / IV ATM / PUT SKEW NIVEL</title>
+<title>STT SIGNALS - IV_CONV / IV ATM / PUT SKEW / SQI_V2</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <script src="https://cdn.plot.ly/plotly-2.30.0.min.js"></script>
 <style>
@@ -69,8 +69,8 @@ section.evidence { max-width:1200px; margin:0 auto; display:flex; flex-direction
 <body>
 <div class="header">
   <div>
-    <h1>STT REGIME - IV_CONV / IV ATM / PUT SKEW NIVEL</h1>
-    <div class="subtitle">3 senales de regimen sobre STT (PUT BWB +K1 -2K2 +K3, DTE 150-170) - percentil expanding ex-ante</div>
+    <h1>STT SIGNALS - IV_CONV / IV ATM / PUT SKEW / SQI_V2</h1>
+    <div class="subtitle">3 senales de regimen + 1 score de calidad trade-level (SQI_V2 proxy) sobre STT (PUT BWB +K1 -2K2 +K3, DTE 150-170) - percentil expanding ex-ante</div>
   </div>
   <div class="latest-group">
     <div class="latest">
@@ -91,6 +91,12 @@ section.evidence { max-width:1200px; margin:0 auto; display:flex; flex-direction
       <div class="mini">skew_25d_vs50 @dte160</div>
       <div class="hint">&uarr; mas alto = mejor (FAV &ge;80)</div>
     </div>
+    <div class="latest">
+      <div class="label">SQI_V2 pct (calidad)</div>
+      <div><span class="v" id="ld-sqi">--</span><span class="regime" id="lr-sqi">--</span></div>
+      <div class="mini">0.57 theta/spot + 0.43 ivconv (proxy)</div>
+      <div class="hint">&uarr; mas alto = mejor (FAV &ge;80)</div>
+    </div>
   </div>
 </div>
 
@@ -100,7 +106,10 @@ section.evidence { max-width:1200px; margin:0 auto; display:flex; flex-direction
   <strong>3 senales canonicas STT</strong>, todas como <strong>percentil expanding</strong> (0-100, sin lookahead):
   <strong>IV_CONV</strong> = <code>(iv_k1+iv_k3)/2 - iv_k2</code> (concavidad de la PUT smile, Werner) rankeada sobre dias-trade STT &middot;
   <strong>IV ATM</strong> = nivel IV ATM (iv_50d) @dte160 percentil expanding (eje vol, migrado desde VIX) &middot;
-  <strong>PUT SKEW NIVEL</strong> = <code>skew_25d_vs50_pct_expanding</code> @ dte160 (prima de cola en puts, 25d vs ATM).
+  <strong>PUT SKEW NIVEL</strong> = <code>skew_25d_vs50_pct_expanding</code> @ dte160 (prima de cola en puts, 25d vs ATM) &middot;
+  <strong>SQI_V2</strong> = score de calidad TRADE-LEVEL <code>0.57*rank(theta/spot) + 0.43*rank(IV_CONV)</code>; en este chart va en version
+  <strong>proxy de mercado</strong> (comp1 via iv_25d@160, rho +0.91; proxy total rho +0.85 con el trade-level, r +0.43 vs PnL_d030 diario).
+  Version exacta y estudio completo: <code>SQI_V2_Formula_(STT).md</code> + Cohort Explorer own-stt.
   Bandas: <strong>FAVORABLE</strong> &ge;80, <strong>NEUTRAL</strong> 20-80, <strong>ADVERSO</strong> &le;20.
   Universo del estudio: STT V9 2019-2025, las 3 senales presentes.
   <br><strong>Grafico + panel superior = regimen DIARIO a hoy</strong> (ultima fecha de mercado disponible en SKEW_PUT_ENRICHED @dte160);
@@ -181,6 +190,7 @@ fetch('data.json?v=' + Date.now()).then(r => r.json()).then(data => {
   document.getElementById('ld-vix').textContent = L.vix_pct.toFixed(1); setReg('lr-vix', L.regime_vix);
   document.getElementById('ld-vixraw').textContent = (L.vix_raw*100).toFixed(1)+'%';
   document.getElementById('ld-ps').textContent = L.ps_pct.toFixed(1); setReg('lr-ps', L.regime_ps);
+  if (L.sqi_pct !== undefined) { document.getElementById('ld-sqi').textContent = L.sqi_pct.toFixed(1); setReg('lr-sqi', L.regime_sqi); }
 
   document.getElementById('meta-universe').textContent =
     `STT V9 ${data.meta.date_min} - ${data.meta.date_max} | N=${data.meta.n_trades.toLocaleString()} + ${data.meta.n_days.toLocaleString()} dias`;
@@ -242,6 +252,7 @@ fetch('data.json?v=' + Date.now()).then(r => r.json()).then(data => {
   const t = data.series.map(d=>d.t);
   const mk = (y,name,color,axis) => ({x:t, y:data.series.map(d=>d[y]), name, type:'scatter', mode:'lines', line:{color,width:1.1}, yaxis:axis||'y', hovertemplate:'%{x}<br>'+name+': <b>%{y:.1f}</b><extra></extra>'});
   const traces = [ mk('ivc','IV_CONV pct','#58a6ff'), mk('vix','IV ATM pct','#ff9f43'), mk('ps','PUT SKEW pct','#bc8cff'),
+                   mk('sqi','SQI_V2 pct (proxy)','#3fb950'),
                    {x:t, y:data.series.map(d=>d.spx), name:'SPX', type:'scatter', mode:'lines', line:{color:'#6e7681',width:0.9}, yaxis:'y2', connectgaps:true, hovertemplate:'%{x}<br>SPX: <b>%{y:,.0f}</b><extra></extra>'} ];
   Plotly.newPlot('chart', traces, {
     paper_bgcolor:'#161b22', plot_bgcolor:'#161b22', font:{color:'#c9d1d9',size:11},

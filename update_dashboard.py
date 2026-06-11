@@ -190,7 +190,7 @@ data['stats']={
 #   IV_CONV = proxy (iv_5d+iv_30d)/2 - iv_15d -> smooth3 -> expanding_pct  [rho +0.84 con trade-specific]
 # Las 3 senales se suavizan 3d (ex-ante) antes de percentilizar. BLOQUE IDENTICO a daily_refresh.py.
 print('[6] Serie diaria regimen-a-hoy (chart/panel) SUAVIZADO 3d + HEAL r=0 ...', flush=True)
-dpsf = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','iv_5d','iv_15d','iv_30d','iv_50d',
+dpsf = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','iv_5d','iv_15d','iv_25d','iv_30d','iv_50d',
                                      'skew_25d_vs50','underlying_price','strike_hit_50d','expiration_used'])
 dpsf['dia'] = pd.to_datetime(dpsf['trade_date']).dt.normalize()
 dpsf = dpsf[dpsf['dte_target']==160].sort_values('dia').reset_index(drop=True)
@@ -200,20 +200,27 @@ dpsf['ivc_proxy_raw'] = (dpsf['iv_5d']+dpsf['iv_30d'])/2 - dpsf['iv_15d']
 dpsf['ivc_d'] = expanding_pct(smooth3(dpsf['ivc_proxy_raw'].values))
 dpsf['atm_d'] = expanding_pct(smooth3(dpsf['iv_50d'].values))
 dpsf['ps_d']  = expanding_pct(smooth3(dpsf['skew_25d_vs50'].values))
+# SQI_V2 PROXY diario (trade-level score aproximado con datos de mercado):
+#   comp1 proxy = iv_25d @160 (rho +0.910 con THETA_OVER_SPOT diario)
+#   comp3 proxy = ivc_proxy (rho +0.844). Proxy total: rho +0.848 con SQI_V2 trade,
+#   r +0.425 vs PnL_d030 diario. Mismos pesos congelados 0.57/0.43.
+dpsf['sqi_d'] = 0.57*expanding_pct(smooth3(dpsf['iv_25d'].values)) + 0.43*dpsf['ivc_d']
 # SPX close (cotizacion) para el eje secundario del grafico
 _spx = pd.read_csv(r'C:/Users/Administrator/Desktop/FINAL DATA/SP_SPX_CLOSE_HISTORICAL_PRICES.csv', usecols=['time','close'])
 _spx['dia'] = pd.to_datetime(_spx['time']).dt.normalize()
 _spx = _spx.rename(columns={'close':'spx_close'})[['dia','spx_close']]
 dpsf = dpsf.merge(_spx, on='dia', how='left')
-dser = dpsf.dropna(subset=['ivc_d','atm_d','ps_d']).reset_index(drop=True)
+dser = dpsf.dropna(subset=['ivc_d','atm_d','ps_d','sqi_d']).reset_index(drop=True)
 data['series'] = [{'t':r['dia'].strftime('%Y-%m-%d'),'ivc':round(float(r['ivc_d']),2),
                    'vix':round(float(r['atm_d']),2),'ps':round(float(r['ps_d']),2),
+                   'sqi':round(float(r['sqi_d']),2),
                    'spx':(round(float(r['spx_close']),2) if pd.notna(r['spx_close']) else None)} for _,r in dser.iterrows()]
 _last = dser.iloc[-1]
 data['latest'] = {'date':_last['dia'].strftime('%Y-%m-%d'),
     'ivc_pct':float(_last['ivc_d']),'regime_ivc':banda(_last['ivc_d']),
     'vix_pct':float(_last['atm_d']),'regime_vix':banda(_last['atm_d']),
     'ps_pct':float(_last['ps_d']),'regime_ps':banda(_last['ps_d']),
+    'sqi_pct':float(_last['sqi_d']),'regime_sqi':banda(_last['sqi_d']),
     'vix_raw':float(_last['iv_50d']),'ivc_raw':float(_last['ivc_proxy_raw'])}
 data['meta']['chart_date_max'] = _last['dia'].strftime('%Y-%m-%d')
 data['meta']['chart_n_days']  = int(len(dser))

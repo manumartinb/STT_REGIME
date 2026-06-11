@@ -61,7 +61,7 @@ def main():
             log(f"data.json no existe en {DIR} -> regenera primero con update_dashboard.py"); return 1
         data = json.load(open(DATA, encoding='utf-8'))
 
-        ps = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','iv_5d','iv_15d','iv_30d','iv_50d',
+        ps = pd.read_csv(PS_PATH, usecols=['trade_date','dte_target','iv_5d','iv_15d','iv_25d','iv_30d','iv_50d',
                                            'skew_25d_vs50','underlying_price','strike_hit_50d','expiration_used'])
         ps['dia'] = pd.to_datetime(ps['trade_date']).dt.normalize()
         ps = ps[ps['dte_target']==160].sort_values('dia').reset_index(drop=True)
@@ -75,23 +75,27 @@ def main():
         ps['ivc_d'] = expanding_pct(smooth3(ps['ivc_raw'].values))
         ps['atm_d'] = expanding_pct(smooth3(ps['iv_50d'].values))
         ps['ps_d']  = expanding_pct(smooth3(ps['skew_25d_vs50'].values))
+        # SQI_V2 PROXY (comp1=iv_25d rho+0.91; comp3=ivc_proxy). BLOQUE IDENTICO a update_dashboard.py.
+        ps['sqi_d'] = 0.57*expanding_pct(smooth3(ps['iv_25d'].values)) + 0.43*ps['ivc_d']
 
         spx = pd.read_csv(SPX_PATH, usecols=['time','close'])
         spx['dia'] = pd.to_datetime(spx['time']).dt.normalize()
         ps = ps.merge(spx[['dia','close']].rename(columns={'close':'spx'}), on='dia', how='left')
 
-        dser = ps.dropna(subset=['ivc_d','atm_d','ps_d']).reset_index(drop=True)
+        dser = ps.dropna(subset=['ivc_d','atm_d','ps_d','sqi_d']).reset_index(drop=True)
         if dser.empty:
             log("serie diaria vacia tras dropna"); return 2
 
         series = [{'t':r['dia'].strftime('%Y-%m-%d'), 'ivc':round(float(r['ivc_d']),2),
                    'vix':round(float(r['atm_d']),2), 'ps':round(float(r['ps_d']),2),
+                   'sqi':round(float(r['sqi_d']),2),
                    'spx':(round(float(r['spx']),2) if pd.notna(r['spx']) else None)} for _,r in dser.iterrows()]
         last = dser.iloc[-1]
         latest = {'date':last['dia'].strftime('%Y-%m-%d'),
                   'ivc_pct':float(last['ivc_d']),'regime_ivc':banda(last['ivc_d']),
                   'vix_pct':float(last['atm_d']),'regime_vix':banda(last['atm_d']),
                   'ps_pct':float(last['ps_d']),'regime_ps':banda(last['ps_d']),
+                  'sqi_pct':float(last['sqi_d']),'regime_sqi':banda(last['sqi_d']),
                   'vix_raw':float(last['iv_50d']),'ivc_raw':float(last['ivc_raw'])}
 
         data['series'] = series
@@ -101,7 +105,7 @@ def main():
 
         json.dump(data, open(DATA,'w',encoding='utf-8'), indent=2)
         log(f"data.json patched: series={len(series)} dias, latest={latest['date']} "
-            f"(IVC {latest['ivc_pct']:.1f} / IVATM {latest['vix_pct']:.1f} / PS {latest['ps_pct']:.1f})")
+            f"(IVC {latest['ivc_pct']:.1f} / IVATM {latest['vix_pct']:.1f} / PS {latest['ps_pct']:.1f} / SQI {latest['sqi_pct']:.1f})")
 
         # ---- git push (SSH) ----
         git(['add','data.json'])
@@ -114,7 +118,7 @@ def main():
         p = git(['push','origin','main'])
         if p.returncode != 0:
             log(f"push fallo: {p.stderr.strip()}"); return 1
-        log("pushed -> https://manumartinb.github.io/STT_REGIME/")
+        log("pushed -> https://manumartinb.github.io/STT_SIGNALS/")
         return 0
     except Exception as e:
         log(f"ERROR {type(e).__name__}: {e}"); return 1

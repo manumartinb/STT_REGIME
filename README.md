@@ -1,9 +1,9 @@
-# STT REGIME - IV_CONV / IV ATM / PUT SKEW NIVEL
+# STT SIGNALS - IV_CONV / IV ATM / PUT SKEW / SQI_V2
 
 Dashboard de 3 senales de regimen validadas contra STT V9 (PUT BWB +K1 -2K2 +K3,
 DTE 150-170, 1,629 trades + 1,223 dias unicos, 2019-2025).
 
-**Live:** https://manumartinb.github.io/STT_REGIME/
+**Live:** https://manumartinb.github.io/STT_SIGNALS/
 
 ## Las 3 senales (percentil expanding 0-100, ex-ante)
 
